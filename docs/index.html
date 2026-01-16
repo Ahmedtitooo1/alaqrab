@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <link rel="icon" type="image/png" href="/logo.png">
+    <link rel="icon" type="image/png" href="./logo.png">
     <title>AleaQrab - منظومة العقرب التعليمية</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
@@ -129,111 +129,8 @@
                 print-color-adjust: exact !important;
             }
         }
-
-        @media print {
-            @page {
-                size: A4;
-                margin: 15mm 10mm;
-            }
-
-            * {
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-            }
-
-            body {
-                margin: 0;
-                padding: 0;
-                background: white !important;
-            }
-
-            .no-print {
-                display: none !important;
-            }
-
-            .print\:block {
-                display: block !important;
-            }
-
-            /* تحسين الجداول للطباعة */
-            table {
-                page-break-inside: auto;
-                border-collapse: collapse !important;
-            }
-
-            tr {
-                page-break-inside: avoid;
-                page-break-after: auto;
-            }
-
-            thead {
-                display: table-header-group;
-            }
-
-            tfoot {
-                display: table-footer-group;
-            }
-
-            /* منع قطع العناصر */
-            h1,
-            h2,
-            h3,
-            h4,
-            h5,
-            h6 {
-                page-break-after: avoid;
-                page-break-inside: avoid;
-            }
-
-            img {
-                page-break-inside: avoid;
-                max-width: 100% !important;
-            }
-
-            /* تحسين الألوان والحدود */
-            .border,
-            .border-2,
-            .border-4 {
-                border-color: #000 !important;
-            }
-
-            .bg-indigo-950 {
-                background-color: #1e1b4b !important;
-                color: white !important;
-            }
-
-            .text-indigo-950 {
-                color: #1e1b4b !important;
-            }
-
-            /* تحسين الظلال للطباعة */
-            .shadow-xl,
-            .shadow-2xl,
-            .shadow-3xl {
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
-            }
-        }
-
-        /* دعم أحجام ورق إضافية */
-        @media print and (width: 8.5in) and (height: 11in) {
-
-            /* Letter Size */
-            @page {
-                size: letter;
-                margin: 0.5in;
-            }
-        }
-
-        @media print and (width: 8.5in) and (height: 14in) {
-
-            /* Legal Size */
-            @page {
-                size: legal;
-                margin: 0.5in;
-            }
-        }
     </style>
+
     <script type="importmap">
 {
   "imports": {
@@ -248,12 +145,12 @@
   }
 }
 </script>
-    <link rel="stylesheet" href="/index.css">
+  <script type="module" crossorigin src="./assets/index-DzC2iQDf.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-Cj26XGX7.css">
 </head>
 
 <body>
     <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
 </body>
 
 </html>

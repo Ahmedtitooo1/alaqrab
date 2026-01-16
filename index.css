@@ -30,6 +30,10 @@
     --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
 }
 
+.shadow-3xl {
+    box-shadow: 0 35px 60px -15px rgba(0, 0, 0, 0.3);
+}
+
 body {
     background-color: var(--color-bg-body);
     background-image: var(--gradient-mesh);
@@ -233,6 +237,10 @@ body {
     animation: pulse-glow 2s infinite;
 }
 
+.animate-view {
+    animation: fadeIn 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar {
     width: 6px;
@@ -382,19 +390,33 @@ body {
     scrollbar-width: none;
 }
 
+/* ==================== PROFESSIONAL PRINT STYLES ==================== */
 @media print {
+
+    /* Reset and Base Styles */
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
     body {
         background: white !important;
-        font-size: 12pt;
+        font-size: 11pt;
+        line-height: 1.5;
+        color: #000 !important;
+        margin: 0;
+        padding: 0;
     }
 
     /* Hide UI elements */
     aside,
     header,
+    nav,
     .btn,
     .premium-btn,
     .no-print,
     .animate-float,
+    button:not(.print-keep),
     ::-webkit-scrollbar {
         display: none !important;
     }
@@ -402,26 +424,314 @@ body {
     /* Adjust main content */
     main {
         margin: 0 !important;
-        padding: 0 !important;
+        padding: 1cm !important;
         width: 100% !important;
         background: white !important;
         overflow: visible !important;
     }
 
+    /* Remove shadows and adjust backgrounds */
     .glass-panel,
     .glass-card {
         box-shadow: none !important;
-        border: 1px solid #ddd !important;
+        border: 1px solid #333 !important;
         background: white !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
     }
 
-    /* Ensure tables break cleanly */
+    /* Page Break Controls */
+    .page-break-before {
+        page-break-before: always;
+    }
+
+    .page-break-after {
+        page-break-after: always;
+    }
+
+    .page-break-avoid {
+        page-break-inside: avoid;
+    }
+
+    /* Table Styles for Print */
     table {
         page-break-inside: auto;
+        border-collapse: collapse !important;
+        width: 100% !important;
+        font-size: 10pt;
+    }
+
+    thead {
+        display: table-header-group;
+        background-color: #f0f0f0 !important;
+    }
+
+    tbody {
+        display: table-row-group;
+    }
+
+    tfoot {
+        display: table-footer-group;
     }
 
     tr {
         page-break-inside: avoid;
         page-break-after: auto;
+    }
+
+    td,
+    th {
+        padding: 8px !important;
+        border: 1px solid #333 !important;
+        vertical-align: top;
+    }
+
+    th {
+        font-weight: bold !important;
+        background-color: #e0e0e0 !important;
+        color: #000 !important;
+    }
+
+    /* Headers and Titles */
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        page-break-after: avoid;
+        page-break-inside: avoid;
+        color: #000 !important;
+        font-weight: bold !important;
+    }
+
+    h1 {
+        font-size: 24pt;
+        margin-bottom: 12pt;
+    }
+
+    h2 {
+        font-size: 18pt;
+        margin-bottom: 10pt;
+    }
+
+    h3 {
+        font-size: 14pt;
+        margin-bottom: 8pt;
+    }
+
+    /* Preserve Colors for Important Elements */
+    .print-color-preserve,
+    .text-indigo-600,
+    .text-indigo-700,
+    .text-emerald-600,
+    .text-rose-600,
+    .bg-indigo-950,
+    .bg-emerald-50,
+    .bg-slate-50 {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    /* Logo and Images */
+    img {
+        max-width: 100% !important;
+        page-break-inside: avoid;
+        display: block;
+    }
+
+    /* Borders and Dividers */
+    .border-b,
+    .border-t {
+        border-color: #333 !important;
+    }
+
+    /* Rounded corners should be minimal in print */
+    .rounded-xl,
+    .rounded-2xl,
+    .rounded-3xl,
+    .rounded-full {
+        border-radius: 4pt !important;
+    }
+
+    /* Font Weights */
+    .font-black {
+        font-weight: 900 !important;
+    }
+
+    .font-bold {
+        font-weight: 700 !important;
+    }
+
+    /* Spacing Adjustments */
+    .space-y-10>*+*,
+    .space-y-8>*+*,
+    .space-y-6>*+* {
+        margin-top: 12pt !important;
+    }
+
+    /* Grid Layouts */
+    .grid {
+        display: block !important;
+    }
+
+    .grid>* {
+        margin-bottom: 12pt;
+    }
+
+    /* Flex Layouts */
+    .flex {
+        display: block !important;
+    }
+
+    /* Text Alignment */
+    .text-right {
+        text-align: right !important;
+    }
+
+    .text-center {
+        text-align: center !important;
+    }
+
+    .text-left {
+        text-align: left !important;
+    }
+
+    /* Signature Lines */
+    .signature-line {
+        border-top: 2px solid #000;
+        margin-top: 40pt;
+        padding-top: 8pt;
+        text-align: center;
+    }
+
+    /* Watermark Support */
+    .watermark {
+        opacity: 0.1 !important;
+        position: absolute;
+        z-index: -1;
+    }
+
+    /* QR Code and Barcodes */
+    .qr-code,
+    .barcode {
+        page-break-inside: avoid;
+        max-width: 150pt;
+    }
+
+    /* Financial Tables - Special Formatting */
+    .financial-table td {
+        font-family: 'Courier New', monospace;
+        text-align: right;
+    }
+
+    .financial-table .amount {
+        font-weight: bold;
+        white-space: nowrap;
+    }
+
+    /* Receipt/Invoice Specific */
+    .receipt-header {
+        border-bottom: 3px double #000;
+        padding-bottom: 12pt;
+        margin-bottom: 12pt;
+    }
+
+    .receipt-footer {
+        border-top: 3px double #000;
+        padding-top: 12pt;
+        margin-top: 12pt;
+    }
+
+    /* Official Stamps and Seals */
+    .official-seal {
+        border: 3px double #000;
+        border-radius: 50%;
+        padding: 20pt;
+        text-align: center;
+        page-break-inside: avoid;
+    }
+
+    /* Page Numbers */
+    @page {
+        margin: 2cm;
+        size: A4;
+
+        @bottom-right {
+            content: counter(page) " / " counter(pages);
+            font-size: 9pt;
+            color: #666;
+        }
+    }
+
+    /* First Page - No Header */
+    @page :first {
+        margin-top: 1cm;
+    }
+
+    /* Avoid orphans and widows */
+    p,
+    li {
+        orphans: 3;
+        widows: 3;
+    }
+
+    /* Links - Show URL */
+    a[href]:after {
+        content: " (" attr(href) ")";
+        font-size: 8pt;
+        color: #666;
+    }
+
+    a[href^="#"]:after,
+    a[href^="javascript"]:after {
+        content: "";
+    }
+
+    /* Abbreviations */
+    abbr[title]:after {
+        content: " (" attr(title) ")";
+    }
+
+    /* Code blocks */
+    pre,
+    code {
+        border: 1px solid #ccc;
+        background-color: #f5f5f5 !important;
+        padding: 4pt;
+        font-family: 'Courier New', monospace;
+        font-size: 9pt;
+        page-break-inside: avoid;
+    }
+
+    /* Blockquotes */
+    blockquote {
+        border-left: 4px solid #ccc;
+        padding-left: 12pt;
+        margin-left: 0;
+        font-style: italic;
+        page-break-inside: avoid;
+    }
+
+    /* Status Badges */
+    .badge,
+    .status-badge {
+        border: 1px solid #000 !important;
+        padding: 2pt 6pt !important;
+        font-size: 9pt;
+        font-weight: bold;
+    }
+
+    /* Ensure visibility of important text */
+    .text-white {
+        color: #000 !important;
+    }
+
+    /* Dark backgrounds should be light in print */
+    .bg-slate-900,
+    .bg-slate-950,
+    .bg-black {
+        background-color: #f0f0f0 !important;
+        color: #000 !important;
     }
 }

@@ -4,7 +4,7 @@ import {
   Trophy, Play, Book, Target, MessageSquare,
   Flame, Star, Zap, LayoutList, DownloadCloud,
   AlertCircle, ChevronLeft, Calendar, BrainCircuit,
-  TrendingUp, Award, Clock, ArrowRight
+  TrendingUp, Award, Clock, ArrowRight, Activity
 } from 'lucide-react';
 import { useAppContext } from '../../context/AppContext';
 import SmartAnalytic from '../SmartAnalytic';
@@ -15,7 +15,7 @@ interface ViewProps {
 }
 
 const StudentView: React.FC<ViewProps> = ({ onNavigate }) => {
-  const { lang, user, notifications, theme } = useAppContext();
+  const { lang, t, user, notifications, theme } = useAppContext();
   const isRtl = lang === 'ar';
 
   // تجربة مستخدم: مهام اليوم
@@ -45,16 +45,16 @@ const StudentView: React.FC<ViewProps> = ({ onNavigate }) => {
             </div>
             <div>
               <h1 className="text-2xl md:text-4xl font-black tracking-tight mb-3 text-black">
-                {isRtl ? `أهلاً يا بطل، ${user?.firstName}` : `Welcome Hero, ${user?.firstName}`}
+                {t('student_hero_welcome')} {user?.firstName}
               </h1>
               <div className="flex flex-wrap justify-center md:justify-start gap-2 md:gap-4 items-center">
                 <div className="flex items-center gap-2 px-3 md:px-4 py-1 md:py-1.5 bg-blue-50 text-blue-600 rounded-full border border-blue-100">
                   <Flame size={12} md:size={14} className="text-orange-500" />
-                  <span className="text-[10px] md:text-xs font-black uppercase tracking-widest tabular-nums">12 Day Streak</span>
+                  <span className="text-[10px] md:text-xs font-black uppercase tracking-widest tabular-nums">12 {t('streak_label')}</span>
                 </div>
                 <div className="flex items-center gap-2 px-3 md:px-4 py-1 md:py-1.5 bg-amber-50 text-amber-600 rounded-full border border-amber-100">
                   <Award size={12} md:size={14} />
-                  <span className="text-[10px] md:text-xs font-black uppercase tracking-widest">{isRtl ? 'رتبة: العقرب البرونزي' : 'Rank: Bronze Scorpion'}</span>
+                  <span className="text-[10px] md:text-xs font-black uppercase tracking-widest">{t('rank_label')} {t('bronze_scorpion')}</span>
                 </div>
               </div>
             </div>
@@ -66,7 +66,7 @@ const StudentView: React.FC<ViewProps> = ({ onNavigate }) => {
               className="w-full md:w-auto px-8 py-4 md:py-5 bg-blue-600 text-white rounded-xl md:rounded-[1.75rem] font-black flex items-center justify-center gap-3 hover:scale-105 active:scale-95 transition-all shadow-xl shadow-blue-600/20"
             >
               <BrainCircuit size={24} />
-              {isRtl ? 'اسأل المعلم الذكي' : 'Ask AI Tutor'}
+              {t('ask_ai_tutor')}
             </button>
           </div>
         </div>
@@ -77,8 +77,8 @@ const StudentView: React.FC<ViewProps> = ({ onNavigate }) => {
           {/* 2. Intelligent Learning Path */}
           <section>
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-black flex items-center gap-3 text-black"><TrendingUp className="text-blue-600" /> {isRtl ? 'مسارك التعليمي' : 'Learning Path'}</h3>
-              <button className="text-xs font-black text-blue-600 uppercase tracking-widest hover:underline">{isRtl ? 'عرض الجدول الزمني' : 'View Schedule'}</button>
+              <h3 className="text-xl font-black flex items-center gap-3 text-black"><TrendingUp className="text-blue-600" /> {t('learning_path')}</h3>
+              <button className="text-xs font-black text-blue-600 uppercase tracking-widest hover:underline">{t('view_schedule')}</button>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <PathCard
@@ -87,6 +87,7 @@ const StudentView: React.FC<ViewProps> = ({ onNavigate }) => {
                 lessons={12}
                 icon={<Zap className="text-amber-500" />}
                 onClick={() => onNavigate('student_exams')}
+                t={t}
               />
               <PathCard
                 title={isRtl ? 'الميكانيكا الكلاسيكية' : 'Classical Mechanics'}
@@ -94,6 +95,7 @@ const StudentView: React.FC<ViewProps> = ({ onNavigate }) => {
                 lessons={8}
                 icon={<LayoutList className="text-blue-500" />}
                 onClick={() => onNavigate('student_exams')}
+                t={t}
               />
             </div>
           </section>
@@ -107,11 +109,12 @@ const StudentView: React.FC<ViewProps> = ({ onNavigate }) => {
           </section>
 
           {/* 4. Action Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <QuickAction icon={<Target />} label={isRtl ? 'قاعة الاختبارات' : 'Exam Hall'} onClick={() => onNavigate('student_exams')} color="bg-orange-500" />
-            <QuickAction icon={<DownloadCloud />} label={isRtl ? 'المكتبة الرقمية' : 'Library'} onClick={() => onNavigate('files')} color="bg-blue-600" />
-            <QuickAction icon={<MessageSquare />} label={isRtl ? 'غرفة النقاش' : 'Live Chat'} onClick={() => onNavigate('messages')} color="bg-emerald-600" />
-            <QuickAction icon={<Calendar />} label={isRtl ? 'جدول الحصص' : 'Schedule'} onClick={() => onNavigate('overview')} color="bg-purple-600" />
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
+            <QuickAction icon={<Activity />} label={isRtl ? 'رحلتي التعليمية' : 'My Journey'} onClick={() => onNavigate('student_journey')} color="bg-slate-900" />
+            <QuickAction icon={<Target />} label={t('exam_hall')} onClick={() => onNavigate('student_exams')} color="bg-orange-500" />
+            <QuickAction icon={<DownloadCloud />} label={t('digital_library')} onClick={() => onNavigate('files')} color="bg-blue-600" />
+            <QuickAction icon={<MessageSquare />} label={t('discussion_room')} onClick={() => onNavigate('messages')} color="bg-emerald-600" />
+            <QuickAction icon={<Calendar />} label={t('tool_schedule')} onClick={() => onNavigate('overview')} color="bg-purple-600" />
           </div>
         </div>
 
@@ -120,7 +123,7 @@ const StudentView: React.FC<ViewProps> = ({ onNavigate }) => {
           <div className="glass-card p-10 bg-white border border-slate-100 shadow-sm">
             <div className="flex items-center gap-3 mb-8 border-b pb-4">
               <div className="p-2 bg-blue-50 text-blue-600 rounded-lg"><Clock size={18} /></div>
-              <h4 className="font-black text-sm uppercase tracking-widest text-black">{isRtl ? 'مهمة اليوم' : 'Daily Missions'}</h4>
+              <h4 className="font-black text-sm uppercase tracking-widest text-black">{t('daily_mission')}</h4>
             </div>
             <div className="space-y-4">
               {dailyMissions.map(m => (
@@ -136,13 +139,13 @@ const StudentView: React.FC<ViewProps> = ({ onNavigate }) => {
                 </div>
               ))}
             </div>
-            <button className="w-full mt-8 py-4 bg-black text-white rounded-2xl font-black text-xs hover:bg-blue-600 transition-all">تحديث المهام</button>
+            <button className="w-full mt-8 py-4 bg-black text-white rounded-2xl font-black text-xs hover:bg-blue-600 transition-all">{t('update_missions')}</button>
           </div>
 
           {/* 6. Recent Notifications */}
           <div className="glass-card p-10 bg-blue-50 border-blue-100 shadow-sm">
             <h4 className="font-black text-xs uppercase tracking-widest text-blue-600 mb-6 flex items-center gap-2">
-              <AlertCircle size={16} /> {isRtl ? 'تنبيهات العقرب' : 'Latest Notices'}
+              <AlertCircle size={16} /> {t('scorpion_notices')}
             </h4>
             <div className="space-y-6">
               {notifications.slice(0, 2).map(n => (
@@ -159,21 +162,21 @@ const StudentView: React.FC<ViewProps> = ({ onNavigate }) => {
   );
 };
 
-const PathCard = ({ title, progress, lessons, icon, onClick }: any) => (
+const PathCard = ({ title, progress, lessons, icon, onClick, t }: any) => (
   <button onClick={onClick} className="glass-card p-8 bg-white group hover:border-blue-500 transition-all text-right flex flex-col gap-6 shadow-sm border border-slate-100">
     <div className="flex justify-between items-start">
       <div className="p-4 bg-slate-50 rounded-2xl group-hover:scale-110 transition-transform">
         {icon}
       </div>
       <div className="text-center">
-        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Lessons</p>
+        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('lessons_label')}</p>
         <p className="font-black text-lg text-black">{lessons}</p>
       </div>
     </div>
     <div>
       <h4 className="font-black text-xl mb-3 text-black">{title}</h4>
       <div className="flex justify-between items-center mb-2">
-        <span className="text-[10px] font-black text-slate-400 uppercase">Progress</span>
+        <span className="text-[10px] font-black text-slate-400 uppercase">{t('progress_label')}</span>
         <span className="text-xs font-black text-blue-600">{progress}%</span>
       </div>
       <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">

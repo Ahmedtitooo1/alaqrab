@@ -1,12 +1,13 @@
-
 import * as React from 'react';
 import { createContext, useContext, useState, ReactNode, useMemo, useEffect } from 'react';
 import {
   User, UserRole, FinancialCategory, FinancialEntry,
   InventoryItem, InventoryTransaction, Notification, PayrollRecord,
   Announcement, Institution, Supplier, AnnouncementStatus, AnnouncementType,
-  QuestionType, ClientType, PricingModel, FinancialFund
+  QuestionType, ClientType, PricingModel, FinancialFund,
+  Exam, Assignment, MarketplaceItem, Achievement, LearningPath, ProctoringLog, StudentProgress
 } from '../types';
+import { translations } from './translations';
 
 interface AppContextType {
   lang: 'ar' | 'en';
@@ -24,6 +25,13 @@ interface AppContextType {
   payrollRecords: PayrollRecord[];
   announcements: Announcement[];
   institutions: Institution[];
+  exams: Exam[];
+  assignments: Assignment[];
+  marketplaceItems: MarketplaceItem[];
+  learningPaths: LearningPath[];
+  achievements: Achievement[];
+  proctoringLogs: ProctoringLog[];
+  studentProgress: StudentProgress[];
   setLang: (l: 'ar' | 'en') => void;
   setUser: (u: User | null) => void;
   t: (key: string) => string;
@@ -55,10 +63,16 @@ interface AppContextType {
   systemLogo: string;
   systemName: string;
   setSystemName: (name: string) => void;
+  setSystemLogo: (logo: string) => void;
   systemContact: { email: string; phone: string };
   setSystemContact: (contact: { email: string; phone: string }) => void;
   focusMode: boolean;
   setFocusMode: (mode: boolean) => void;
+  addExam: (e: Exam) => void;
+  addMarketplaceItem: (i: MarketplaceItem) => void;
+  purchaseMarketplaceItem: (itemId: string, studentId: string) => void;
+  addProctoringLog: (log: ProctoringLog) => void;
+  updateLearningPath: (lp: LearningPath) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -67,36 +81,6 @@ export const useAppContext = () => {
   const context = useContext(AppContext);
   if (!context) throw new Error('useAppContext must be used within an AppProvider');
   return context;
-};
-
-const translations: any = {
-  ar: {
-    dashboard: "لوحة التحكم",
-    student: "طالب",
-    teacher: "معلم",
-    accountant: "المحاسب المالي",
-    admin: "مدير الفرع",
-    super_admin: "مدير النظام (SaaS)",
-    parent: "ولي أمر",
-    logout: "تسجيل الخروج",
-    messages: "مركز المراسلات",
-    settings: "الإعدادات العامة",
-    search_placeholder: "ابحث عن أي شيء...",
-    online: "متصل الآن",
-    offline: "غير متصل",
-    type_message: "اكتب رسالتك هنا...",
-    announcements_title: "مركز التعميمات والإشعارات",
-    announcement_val: "إعلان عام",
-    event_val: "فعالية مجدولة",
-    inventory: "المخازن والجرد",
-    payroll: "مسيرات الرواتب",
-    ledger: "دفتر الأستاذ",
-    vouchers: "سندات القبض والصرف",
-    coa: "دليل الحسابات",
-    suppliers: "إدارة الموردين",
-    liabilities: "الالتزامات المالية",
-    reports: "التقارير التحليلية"
-  }
 };
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -133,7 +117,38 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const [initialFunds, setInitialFunds] = useState<FinancialFund[]>([
     { id: 'f1', name: 'الخزينة المركزية', type: 'cash', balance: 15400, accountCode: '11101' },
-    { id: 'f2', name: 'حساب البنك الراجحي', type: 'bank', balance: 92000, accountCode: '11102' }
+    {
+      id: 'f2',
+      name: 'حساب البنك الراجحي',
+      type: 'bank',
+      balance: 92000,
+      accountCode: '11102',
+      bankName: 'بنك الراجحي',
+      accountNumber: '1234567890',
+      iban: 'SA0380000000608010167519',
+      isActiveForParentPayments: true
+    },
+    {
+      id: 'f3',
+      name: 'محفظة فودافون كاش',
+      type: 'e-wallet',
+      balance: 8500,
+      accountCode: '11103',
+      walletProvider: 'vodafone-cash',
+      walletNumber: '01012345678',
+      isActiveForParentPayments: true
+    },
+    {
+      id: 'f4',
+      name: 'محفظة InstaPay',
+      type: 'e-wallet',
+      balance: 12300,
+      accountCode: '11104',
+      walletProvider: 'instapay',
+      walletNumber: 'instapay@aleaqrab',
+      qrCode: 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=instapay@aleaqrab',
+      isActiveForParentPayments: true
+    }
   ]);
 
   const [financialEntries, setFinancialEntries] = useState<FinancialEntry[]>([]);
@@ -153,6 +168,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [institutions, setInstitutions] = useState<Institution[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [exams, setExams] = useState<Exam[]>([]);
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [marketplaceItems, setMarketplaceItems] = useState<MarketplaceItem[]>([]);
+  const [learningPaths, setLearningPaths] = useState<LearningPath[]>([]);
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [proctoringLogs, setProctoringLogs] = useState<ProctoringLog[]>([]);
+  const [studentProgress, setStudentProgress] = useState<StudentProgress[]>([]);
 
   const t = (key: string) => translations[lang]?.[key] || key;
 
@@ -160,7 +182,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     lang, user, originalAdmin, financialCategories: categoriesBase, financialEntries, inventoryItems,
     inventoryTransactions, inventoryCategories: ['كتب', 'زي', 'أدوات'], allUsers, notifications, payrollRecords: [],
     announcements, institutions, suppliers, funds,
-    setLang, setUser, t,
+    exams, assignments, marketplaceItems, learningPaths, achievements, proctoringLogs, studentProgress,
+    setLang, setUser, t, isRtl: lang === 'ar',
     addNotification: (n: any) => setNotifications(prev => [{ ...n, id: Date.now().toString(), isRead: false }, ...prev]),
     addFinancialEntry: (e: any) => setFinancialEntries(prev => [e, ...prev]),
     updateFinancialEntry: (u: any) => setFinancialEntries(prev => prev.map(e => e.id === u.id ? u : e)),
@@ -258,8 +281,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     },
     systemLogo, systemName, setSystemName, setSystemLogo,
     systemContact, setSystemContact,
-    focusMode, setFocusMode
-  }), [lang, user, originalAdmin, categoriesBase, financialEntries, inventoryItems, inventoryTransactions, allUsers, notifications, announcements, institutions, initialFunds, suppliers, systemName, systemLogo, systemContact, focusMode]);
+    focusMode, setFocusMode,
+    addExam: (e: Exam) => setExams(prev => [e, ...prev]),
+    addMarketplaceItem: (i: MarketplaceItem) => setMarketplaceItems(prev => [i, ...prev]),
+    purchaseMarketplaceItem: (itemId: string, studentId: string) => {
+      setMarketplaceItems(prev => prev.map(item => item.id === itemId ? { ...item, salesCount: item.salesCount + 1 } : item));
+      setNotifications(prev => [{ id: Date.now().toString(), title: 'تم الشراء', content: 'تمت إضافة العنصر لمكتبتك الرقمية.', type: 'success', date: new Date().toISOString(), isRead: false }, ...prev]);
+    },
+    addProctoringLog: (log: ProctoringLog) => setProctoringLogs(prev => [log, ...prev]),
+    updateLearningPath: (lp: LearningPath) => setLearningPaths(prev => prev.map(path => path.id === lp.id ? lp : path)),
+  }), [
+    lang, user, originalAdmin, categoriesBase, financialEntries, inventoryItems,
+    inventoryTransactions, allUsers, notifications, announcements, institutions,
+    initialFunds, suppliers, systemName, systemLogo, systemContact, focusMode,
+    exams, assignments, marketplaceItems, learningPaths, achievements, proctoringLogs, studentProgress
+  ]);
 
 
   return <AppContext.Provider value={contextValue}>{children}</AppContext.Provider>;

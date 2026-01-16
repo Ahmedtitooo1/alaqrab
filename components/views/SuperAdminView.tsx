@@ -8,7 +8,7 @@ import {
    School, CheckCircle, Package, MonitorPlay, Check,
    RefreshCw, DollarSign, Calculator, ChevronRight, UserCircle, Activity, PlayCircle, LogIn,
    Layout, Palette, MessageSquare, Key, UserCheck, ShieldAlert, Zap,
-   Wallet, Search, Trash2, ArrowUpRight, TrendingUp, History, Info, Layers
+   Wallet, Search, Trash2, ArrowUpRight, TrendingUp, History, Info, Layers, Camera, BarChart3
 } from 'lucide-react';
 import { useAppContext } from '../../context/AppContext';
 import SmartAnalytic from '../SmartAnalytic';
@@ -453,8 +453,8 @@ const SuperAdminView: React.FC<SuperAdminViewProps> = ({ mode, onNavigate }) => 
 
          {/* مودال تكوين بيئة جديدة (Pricing & Provisioning) */}
          {showModal && (
-            <div className="fixed inset-0 z-[1000] premium-modal-backdrop flex items-center justify-center p-6">
-               <div className="premium-modal-content w-full max-w-7xl animate-view flex flex-col max-h-[95vh]">
+            <div className="fixed inset-0 z-[1000] premium-modal-backdrop flex items-center justify-center p-6" onClick={() => setShowModal(false)}>
+               <div className="premium-modal-content w-full max-w-7xl animate-view flex flex-col max-h-[95vh]" onClick={e => e.stopPropagation()}>
                   <div className="premium-modal-header flex justify-between items-center">
                      <div className="flex items-center gap-8">
                         <div className="p-6 bg-indigo-600 text-white rounded-[2rem] shadow-2xl"><Globe size={40} /></div>
@@ -496,11 +496,13 @@ const SuperAdminView: React.FC<SuperAdminViewProps> = ({ mode, onNavigate }) => 
                         <div className="space-y-12">
                            <div className="space-y-8">
                               <h4 className="text-sm font-black text-amber-600 uppercase tracking-[0.3em] flex items-center gap-4 border-r-4 border-amber-600 pr-4">3. تمكين الوحدات والصلاحيات (Permissions)</h4>
-                              <div className="grid grid-cols-1 gap-4">
-                                 <PermissionItem label="الذكاء الاصطناعي التوليدي (Gemini Integration)" active={formData.permissions.allowAiUsage} onClick={() => setFormData({ ...formData, permissions: { ...formData.permissions, allowAiUsage: !formData.permissions.allowAiUsage } })} icon={<BrainCircuit size={24} />} />
-                                 <PermissionItem label="البث المباشر والحصص التفاعلية" active={formData.permissions.allowLiveStreaming} onClick={() => setFormData({ ...formData, permissions: { ...formData.permissions, allowLiveStreaming: !formData.permissions.allowLiveStreaming } })} icon={<MonitorPlay size={24} />} />
-                                 <PermissionItem label="النظام المالي المحاسبي المطور" active={formData.permissions.allowFinancialLedger} onClick={() => setFormData({ ...formData, permissions: { ...formData.permissions, allowFinancialLedger: !formData.permissions.allowFinancialLedger } })} icon={<Wallet size={24} />} />
-                                 <PermissionItem label="هوية بصرية مخصصة (White Labeling)" active={formData.permissions.allowCustomBranding} onClick={() => setFormData({ ...formData, permissions: { ...formData.permissions, allowCustomBranding: !formData.permissions.allowCustomBranding } })} icon={<Palette size={24} />} />
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                 <PermissionItem label="الذكاء الاصطناعي (Gemini)" active={formData.permissions.allowAiUsage} onClick={() => setFormData({ ...formData, permissions: { ...formData.permissions, allowAiUsage: !formData.permissions.allowAiUsage } })} icon={<BrainCircuit size={20} />} />
+                                 <PermissionItem label="المصحح الذكي (OCR)" active={formData.permissions.allowAiCorrection} onClick={() => setFormData({ ...formData, permissions: { ...formData.permissions, allowAiCorrection: !formData.permissions.allowAiCorrection } })} icon={<Camera size={20} />} />
+                                 <PermissionItem label="المحلل الذكي للأداء" active={formData.permissions.allowSmartAnalyst} onClick={() => setFormData({ ...formData, permissions: { ...formData.permissions, allowSmartAnalyst: !formData.permissions.allowSmartAnalyst } })} icon={<BarChart3 size={20} />} />
+                                 <PermissionItem label="البث المباشر والحصص" active={formData.permissions.allowLiveStreaming} onClick={() => setFormData({ ...formData, permissions: { ...formData.permissions, allowLiveStreaming: !formData.permissions.allowLiveStreaming } })} icon={<MonitorPlay size={20} />} />
+                                 <PermissionItem label="النظام المالي المحاسبي" active={formData.permissions.allowFinancialLedger} onClick={() => setFormData({ ...formData, permissions: { ...formData.permissions, allowFinancialLedger: !formData.permissions.allowFinancialLedger } })} icon={<Wallet size={20} />} />
+                                 <PermissionItem label="هوية مخصصة (Branding)" active={formData.permissions.allowCustomBranding} onClick={() => setFormData({ ...formData, permissions: { ...formData.permissions, allowCustomBranding: !formData.permissions.allowCustomBranding } })} icon={<Palette size={20} />} />
                               </div>
                            </div>
 

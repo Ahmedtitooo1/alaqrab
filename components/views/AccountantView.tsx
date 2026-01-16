@@ -27,6 +27,9 @@ const AccountantView: React.FC<{ onNavigate: (tab: string) => void }> = ({ onNav
                   <h1 className="text-4xl md:text-6xl font-black tracking-tighter uppercase italic leading-none mb-6">INTEGRATED ERP</h1>
                   <p className="text-slate-400 font-bold text-base md:text-xl max-w-xl mx-auto lg:mx-0">مرحباً بك في المحرك المالي لمنظومة العقرب. كافة القيود مرحلة والسيولة مراقبة لحظياً.</p>
                   <div className="flex flex-wrap justify-center lg:justify-start gap-3 md:gap-4 mt-8 md:mt-10">
+                     <button onClick={() => onNavigate('acc_inventory')} className="flex-1 md:flex-none px-6 md:px-10 py-4 md:py-5 bg-orange-600 text-white rounded-xl md:rounded-[1.75rem] font-black text-xs md:text-sm flex items-center justify-center gap-3 hover:bg-orange-700 transition-all shadow-xl shadow-orange-600/20 active:scale-95">
+                        <Package size={20} /> المخزون
+                     </button>
                      <button onClick={() => onNavigate('acc_vouchers')} className="flex-1 md:flex-none px-6 md:px-10 py-4 md:py-5 bg-indigo-600 rounded-xl md:rounded-[1.75rem] font-black text-xs md:text-sm flex items-center justify-center gap-3 hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-600/20 active:scale-95">
                         <Plus size={20} /> تحرير سند
                      </button>

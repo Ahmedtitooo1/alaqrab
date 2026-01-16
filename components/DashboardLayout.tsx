@@ -14,7 +14,7 @@ import {
   PlusCircle, FileCheck, History, ArrowRightLeft, ShieldAlert, MonitorCheck,
   UserPlus, UserCheck2, HeartPulse, Trophy, FileBadge, MonitorUp, Presentation,
   NotebookTabs, Radio, FileType, Truck, Notebook as NotebookIcon,
-  ShieldQuestion, UserMinus, Bot, Search
+  ShieldQuestion, UserMinus, Bot, Search, Languages, ShoppingBag, Route, Zap
 } from 'lucide-react';
 
 import StudentView from './views/StudentView';
@@ -38,9 +38,18 @@ import AttendanceModule from './AttendanceModule';
 
 import { AIAnalyst } from './AIModules';
 import SmartTutor from './SmartTutor';
+import { MarketplaceModule } from './MarketplaceModule';
+import { GamificationModule } from './GamificationModule';
+import { LearningPathModule } from './LearningPathModule';
+import { AdminCEODashboard } from './AdminCEODashboard';
+import { AIAssistantModule } from './AIAssistantModule';
+import { ProctoringModule } from './ProctoringModule';
+import StudentJourney from './StudentJourney';
+import AssignmentsModule from './AssignmentsModule';
+import InventoryModule from './InventoryModule';
 
 const DashboardLayout: React.FC<{ role: UserRole; onLogout: () => void; onRoleSwitch: (r: UserRole) => void }> = ({ role, onLogout, onRoleSwitch }) => {
-  const { lang, t, user, systemLogo, originalAdmin, endSimulation, systemContact, focusMode } = useAppContext();
+  const { lang, setLang, t, user, systemLogo, originalAdmin, endSimulation, systemContact, focusMode } = useAppContext();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
@@ -65,6 +74,12 @@ const DashboardLayout: React.FC<{ role: UserRole; onLogout: () => void; onRoleSw
 
     // Shared AI Views
     if (activeTab === 'ai_analysis') return <AIAnalyst role={role} />;
+    if (activeTab === 'marketplace') return <MarketplaceModule />;
+    if (activeTab === 'gamification') return <GamificationModule />;
+    if (activeTab === 'learning_path') return <LearningPathModule />;
+    if (activeTab === 'ai_assistant') return <AIAssistantModule />;
+    if (activeTab === 'proctoring') return <ProctoringModule />;
+    if (role === UserRole.SUPER_ADMIN && activeTab === 'ceo_dashboard') return <AdminCEODashboard />;
 
     if (role === UserRole.SUPER_ADMIN) return <SuperAdminView mode={activeTab as any} onNavigate={setActiveTab} />;
 
@@ -88,11 +103,16 @@ const DashboardLayout: React.FC<{ role: UserRole; onLogout: () => void; onRoleSw
 
     if (role === UserRole.STUDENT) {
       if (activeTab === 'overview') return <StudentView onNavigate={setActiveTab} />;
+      if (activeTab === 'marketplace') return <MarketplaceModule />;
+      if (activeTab === 'learning_path') return <LearningPathModule />;
+      if (activeTab === 'gamification') return <GamificationModule />;
       if (activeTab === 'take_exam') return <StudentExamModule mode="hall" />;
       if (activeTab === 'exam_results') return <StudentExamModule mode="results" />;
       if (activeTab === 'files') return <FilesModule />;
       if (activeTab === 'live_room') return <LiveLessonsModule isStudentView />;
       if (activeTab === 'ai_tutor') return <SmartTutor />;
+      if (activeTab === 'student_journey') return <StudentJourney />;
+      if (activeTab === 'assignments') return <AssignmentsModule />;
     }
 
     if (role === UserRole.TEACHER) {
@@ -108,9 +128,11 @@ const DashboardLayout: React.FC<{ role: UserRole; onLogout: () => void; onRoleSw
       if (activeTab === 'results_book') return <ResultsModule />;
       if (activeTab === 'attendance_book') return <AttendanceModule />;
       if (activeTab === 'live_broadcast') return <LiveLessonsModule />;
+      if (activeTab === 'assignments') return <AssignmentsModule />;
+      if (activeTab === 'inventory') return <InventoryModule />;
     }
 
-    return <div className="p-10 text-center font-black opacity-30 text-xl italic">جاري تحميل الوحدة المختارة...</div>;
+    return <div className="p-10 text-center font-black opacity-30 text-xl italic">{t('loading')}</div>;
   };
 
   const MenuItem = ({ id, icon: Icon, labelKey, submenu, menuKey }: any) => {
@@ -133,7 +155,7 @@ const DashboardLayout: React.FC<{ role: UserRole; onLogout: () => void; onRoleSw
             <div className={`p-1 rounded-lg transition-colors ${isActive && !submenu ? 'bg-white/20' : 'bg-slate-100 group-hover:bg-indigo-100'}`}>
               <Icon size={18} className={isActive && !submenu ? 'text-white' : 'text-slate-500 group-hover:text-indigo-600'} />
             </div>
-            {!isCollapsed && <span className="text-[13px] font-bold tracking-tight">{labelKey}</span>}
+            {!isCollapsed && <span className="text-[13px] font-bold tracking-tight">{t(labelKey)}</span>}
           </div>
           {submenu && !isCollapsed && (
             <ChevronDown size={14} className={`transition-transform duration-300 ${isOpen ? 'rotate-180' : ''} ${isActive ? 'text-indigo-200' : 'text-slate-400'}`} />
@@ -150,7 +172,7 @@ const DashboardLayout: React.FC<{ role: UserRole; onLogout: () => void; onRoleSw
                 }}
                 className={`p-2.5 rounded-lg cursor-pointer text-[11px] font-bold transition-all relative overflow-hidden ${activeTab === sub.id ? 'text-indigo-600 bg-indigo-50/80 before:absolute before:left-0 before:top-0 before:h-full before:w-1 before:bg-indigo-600' : 'text-slate-400 hover:text-indigo-600 hover:bg-slate-50'}`}
               >
-                {sub.labelKey}
+                {t(sub.labelKey)}
               </div>
             ))}
           </div>
@@ -175,139 +197,149 @@ const DashboardLayout: React.FC<{ role: UserRole; onLogout: () => void; onRoleSw
               {!isCollapsed && (
                 <div className="flex flex-col">
                   <span className="font-black text-lg tracking-tighter text-slate-900 leading-none uppercase">ALEAQRAB</span>
-                  <span className="text-[9px] font-bold text-slate-400 tracking-widest uppercase">System v3.0</span>
+                  <span className="text-[9px] font-bold text-slate-400 tracking-widest uppercase">{t('system_v')}</span>
                 </div>
               )}
             </div>
           </div>
 
           <nav className="flex-1 overflow-y-auto py-6 no-scrollbar space-y-1">
-            <MenuItem id="overview" icon={LayoutDashboard} labelKey="لوحة التحكم" />
+            <MenuItem id="overview" icon={LayoutDashboard} labelKey="overview" />
 
             {role === UserRole.ACCOUNTANT && (
               <>
                 <MenuItem
-                  labelKey="إدارية" icon={Building} menuKey="acc_admin"
+                  labelKey="acc_admin" icon={Building} menuKey="acc_admin"
                   submenu={[
-                    { id: 'acc_coa', labelKey: 'شجرة الحسابات' },
-                    { id: 'acc_employees', labelKey: 'إدارة موظفين' },
-                    { id: 'acc_clients', labelKey: 'العملاء' },
-                    { id: 'acc_suppliers', labelKey: 'الموردين' },
-                    { id: 'acc_inventory', labelKey: 'ادارة مخازن' }
+                    { id: 'acc_coa', labelKey: 'acc_coa' },
+                    { id: 'acc_employees', labelKey: 'acc_employees' },
+                    { id: 'acc_clients', labelKey: 'acc_clients' },
+                    { id: 'acc_suppliers', labelKey: 'acc_suppliers' },
+                    { id: 'acc_inventory', labelKey: 'acc_inventory' }
                   ]}
                 />
                 <MenuItem
-                  labelKey="قيود محاسبية" icon={FileSpreadsheet} menuKey="acc_entries"
+                  labelKey="acc_entries" icon={FileSpreadsheet} menuKey="acc_entries"
                   submenu={[
-                    { id: 'acc_entries_list', labelKey: 'دفتر القيود' },
-                    { id: 'acc_vouchers', labelKey: 'سندات صرف وإيداع' },
-                    { id: 'acc_journal', labelKey: 'قيود يومية' }
+                    { id: 'acc_entries_list', labelKey: 'acc_entries_list' },
+                    { id: 'acc_vouchers', labelKey: 'acc_vouchers' },
+                    { id: 'acc_journal', labelKey: 'acc_journal' }
                   ]}
                 />
-                <MenuItem id="acc_payroll" icon={CreditCard} labelKey="كشوفات الرواتب والالتزامات" />
-                <MenuItem id="acc_reports" icon={BarChart3} labelKey="تقارير محاسبية" />
-                <MenuItem id="acc_liquidity" icon={Wallet} labelKey="السيولة المالية" />
+                <MenuItem id="acc_payroll" icon={CreditCard} labelKey="acc_payroll" />
+                <MenuItem id="acc_reports" icon={BarChart3} labelKey="acc_reports" />
+                <MenuItem id="acc_liquidity" icon={Wallet} labelKey="acc_liquidity" />
               </>
             )}
 
             {role === UserRole.TEACHER && (
               <>
                 <MenuItem
-                  labelKey="إدارة الاختبارات" icon={PenTool} menuKey="teacher_exams_group"
+                  labelKey="teacher_exams_group" icon={PenTool} menuKey="teacher_exams_group"
                   submenu={[
-                    { id: 'exams_list', labelKey: 'الاختبارات المنشورة' },
-                    { id: 'exams_create', labelKey: 'إنشاء اختبار يدوي' },
-                    { id: 'exams_ai_create', labelKey: 'اختبار ذكي (AI)' },
-                    { id: 'exams_ai_corrector', labelKey: 'مصحح ذكي (OCR)' }
+                    { id: 'exams_list', labelKey: 'exams_list' },
+                    { id: 'exams_create', labelKey: 'exams_create' },
+                    { id: 'exams_ai_create', labelKey: 'exams_ai_create' },
+                    { id: 'exams_ai_corrector', labelKey: 'exams_ai_corrector' }
                   ]}
                 />
-                <MenuItem id="manage_students" icon={Users} labelKey="إدارة الطلاب" />
+                <MenuItem id="manage_students" icon={Users} labelKey="manage_students" />
                 <MenuItem
-                  labelKey="الملفات والمركز" icon={FileType} menuKey="teacher_files_group"
+                  labelKey="teacher_files_group" icon={FileType} menuKey="teacher_files_group"
                   submenu={[
-                    { id: 'content_events', labelKey: 'المناسبات والفعاليات' },
-                    { id: 'content_files', labelKey: 'إدارة المحتوى التعليمي' }
+                    { id: 'content_events', labelKey: 'content_events' },
+                    { id: 'content_files', labelKey: 'content_files' }
                   ]}
                 />
+                <MenuItem id="assignments" icon={ClipboardList} labelKey="assignments_tasks" />
                 <MenuItem
-                  labelKey="دفتر" icon={NotebookTabs} menuKey="teacher_ledger_group"
+                  labelKey="teacher_ledger_group" icon={NotebookTabs} menuKey="teacher_ledger_group"
                   submenu={[
-                    { id: 'results_book', labelKey: 'دفتر النتائج' },
-                    { id: 'attendance_book', labelKey: 'دفتر الحضور والغياب' }
+                    { id: 'results_book', labelKey: 'results_book' },
+                    { id: 'attendance_book', labelKey: 'attendance_book' }
                   ]}
                 />
-                <MenuItem id="live_broadcast" icon={Radio} labelKey="البث المباشر" />
-                <MenuItem id="ai_analysis" icon={BrainCircuit} labelKey="المحلل الذكي" />
+                <MenuItem id="live_broadcast" icon={Radio} labelKey="live_broadcast" />
+                <MenuItem id="marketplace" icon={ShoppingBag} labelKey="educational_marketplace" />
+                <MenuItem id="ai_analysis" icon={BrainCircuit} labelKey="ai_analysis" />
               </>
             )}
 
             {role === UserRole.STUDENT && (
               <>
                 <MenuItem
-                  labelKey="الاختبارات" icon={FileText} menuKey="student_exams_group"
+                  labelKey="student_exams_group" icon={FileText} menuKey="student_exams_group"
                   submenu={[
-                    { id: 'take_exam', labelKey: 'أداء الاختبارات' },
-                    { id: 'exam_results', labelKey: 'سجل النتائج' }
+                    { id: 'take_exam', labelKey: 'take_exam' },
+                    { id: 'exam_results', labelKey: 'exam_results' }
                   ]}
                 />
-                <MenuItem id="files" icon={Package} labelKey="الملفات والمحتوى" />
-                <MenuItem id="live_room" icon={Presentation} labelKey="غرفة البث المباشر" />
-                <MenuItem id="ai_tutor" icon={Bot} labelKey="المعلم الذكي" />
-                <MenuItem id="ai_analysis" icon={BrainCircuit} labelKey="تحليل مستواي" />
+                <MenuItem id="files" icon={Package} labelKey="files" />
+                <MenuItem id="live_room" icon={Presentation} labelKey="live_room" />
+                <MenuItem id="ai_tutor" icon={Bot} labelKey="ai_tutor" />
+                <MenuItem id="ai_assistant" icon={Zap} labelKey="ai_assistant" />
+                <MenuItem id="marketplace" icon={ShoppingBag} labelKey="educational_marketplace" />
+                <MenuItem id="learning_path" icon={Route} labelKey="learning_path" />
+                <MenuItem id="gamification" icon={Trophy} labelKey="leaderboard" />
+                <MenuItem id="assignments" icon={ClipboardList} labelKey="assignments_tasks" />
+                <MenuItem id="student_journey" icon={Activity} labelKey="student_journey_label" />
+                <MenuItem id="ai_analysis" icon={BrainCircuit} labelKey="ai_analysis" />
               </>
             )}
 
             {role === UserRole.SUPER_ADMIN && (
               <>
                 <MenuItem
-                  labelKey="إدارة بيئات النظام" icon={Globe} menuKey="sa_envs_group"
+                  labelKey="sa_envs_group" icon={Globe} menuKey="sa_envs_group"
                   submenu={[
-                    { id: 'overview', labelKey: 'كافة العملاء' },
-                    { id: 'simulation', labelKey: 'مركز المحاكاة' }
+                    { id: 'sa_overview', labelKey: 'sa_overview' },
+                    { id: 'sa_simulation', labelKey: 'sa_simulation' }
                   ]}
                 />
-                <MenuItem id="subscriptions" icon={CreditCard} labelKey="متابعة الاشتراكات" />
-                <MenuItem id="permissions" icon={ShieldCheck} labelKey="إدارة الصلاحيات (SaaS)" />
-                <MenuItem id="system_settings" icon={Settings} labelKey="الإعدادات العامة" />
+                <MenuItem id="subscriptions" icon={CreditCard} labelKey="subscriptions" />
+                <MenuItem id="ceo_dashboard" icon={BarChart3} labelKey="ceo_dashboard" />
+                <MenuItem id="permissions" icon={ShieldCheck} labelKey="permissions" />
+                <MenuItem id="system_settings" icon={Settings} labelKey="system_settings" />
               </>
             )}
 
             {role === UserRole.ADMIN && (
               <>
-                <MenuItem id="approvals" icon={ClipboardCheck} labelKey="الاعتمادات والموافقات" />
+                <MenuItem id="overview" icon={LayoutDashboard} labelKey="overview" />
+                <MenuItem id="approvals" icon={ClipboardCheck} labelKey="approvals" />
                 <MenuItem
-                  labelKey="إدارة الكوادر" icon={Building} menuKey="admin_management"
+                  labelKey="admin_management" icon={Building} menuKey="admin_management"
                   submenu={[
-                    { id: 'manage_teachers', labelKey: 'إدارة المعلمون' },
-                    { id: 'manage_employees', labelKey: 'إدارة الموظفين' }
+                    { id: 'manage_teachers', labelKey: 'admin_teachers' },
+                    { id: 'manage_employees', labelKey: 'admin_employees' }
                   ]}
                 />
-                <MenuItem id="manage_students" icon={Users} labelKey="كشف الطلاب والنتائج" />
-                <MenuItem id="ai_analysis" icon={BrainCircuit} labelKey="تحليل أداء الفرع" />
+                <MenuItem id="manage_students" icon={Users} labelKey="manage_students" />
+                <MenuItem id="proctoring" icon={ShieldAlert} labelKey="proctoring_system" />
               </>
             )}
 
             {role === UserRole.PARENT && (
               <MenuItem
-                labelKey="ملف الطالب" icon={UserCircle} menuKey="parent_student_profile"
+                labelKey="parent_student_profile" icon={UserCircle} menuKey="parent_student_profile"
                 submenu={[
-                  { id: 'academic_results', labelKey: 'النتائج والمستوى الدراسي' },
-                  { id: 'ai_analysis_parent', labelKey: 'تحليل ومقترحات AI' },
-                  { id: 'financial_records', labelKey: 'الاشتراكات والايصالات' }
+                  { id: 'academic_results', labelKey: 'academic_results' },
+                  { id: 'ai_analysis_parent', labelKey: 'ai_analysis_parent' },
+                  { id: 'financial_records', labelKey: 'financial_records' }
                 ]}
               />
             )}
 
             <div className="my-4 px-6 border-b border-slate-100"></div>
 
-            <MenuItem id="messages" icon={MessageSquare} labelKey="المراسلات" />
-            <MenuItem id="settings" icon={Settings2} labelKey="الإعدادات" />
+            <MenuItem id="messages" icon={MessageSquare} labelKey="messages" />
+            <MenuItem id="settings" icon={Settings2} labelKey="settings" />
           </nav>
 
           {!isCollapsed && (
             <div className="mx-6 mb-8 p-6 bg-slate-900 rounded-[2rem] text-right relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/10 rounded-full -mr-12 -mt-12 blur-xl group-hover:bg-indigo-500/20 transition-all"></div>
-              <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-3 flex items-center gap-2">الدعم الفني <ShieldQuestion size={12} /></p>
+              <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-3 flex items-center gap-2">{t('support')} <ShieldQuestion size={12} /></p>
               <div className="space-y-3 relative z-10">
                 <a href={`mailto:${systemContact.email}`} className="block text-[11px] font-bold text-slate-300 hover:text-white transition-colors truncate">{systemContact.email}</a>
                 <a href={`tel:${systemContact.phone}`} className="block text-sm font-black text-white hover:text-indigo-400 transition-colors">{systemContact.phone}</a>
@@ -317,7 +349,7 @@ const DashboardLayout: React.FC<{ role: UserRole; onLogout: () => void; onRoleSw
 
           <div className="p-4 border-t border-slate-100 bg-slate-50/50">
             <button onClick={onLogout} className="w-full flex items-center justify-center gap-3 p-3 text-slate-500 rounded-xl font-bold text-xs hover:bg-rose-50 hover:text-rose-600 transition-all border border-transparent hover:border-rose-100">
-              <LogOut size={16} /> {!isCollapsed && 'تسجيل الخروج'}
+              <LogOut size={16} /> {!isCollapsed && t('logout')}
             </button>
           </div>
         </aside>
@@ -335,11 +367,11 @@ const DashboardLayout: React.FC<{ role: UserRole; onLogout: () => void; onRoleSw
             <div className="flex items-center gap-3">
               <ShieldQuestion size={18} className="animate-pulse" />
               <p className="font-bold text-xs uppercase tracking-wider">
-                {isRtl ? `وضع المحاكاة نشط: [ ${user?.firstName} ${user?.lastName} ]` : `Simulation Mode Active: [ ${user?.firstName} ${user?.lastName} ]`}
+                {t('simulation_active')}: [ ${user?.firstName} ${user?.lastName} ]
               </p>
             </div>
             <button onClick={endSimulation} className="bg-white/20 hover:bg-white/30 text-white px-4 py-1.5 rounded-lg font-bold text-[10px] flex items-center gap-2 transition-all">
-              <UserMinus size={14} /> {isRtl ? 'إنهاء' : 'Exit'}
+              <UserMinus size={14} /> {t('exit')}
             </button>
           </div>
         )}
@@ -355,7 +387,7 @@ const DashboardLayout: React.FC<{ role: UserRole; onLogout: () => void; onRoleSw
                 <h2 className="text-2xl font-black text-slate-800 tracking-tight">
                   {t(activeTab) || activeTab.replace(/_/g, ' ')}
                 </h2>
-                <p className="text-xs font-bold text-slate-400 mt-1">مرحباً بك في لوحة التحكم</p>
+                <p className="text-xs font-bold text-slate-400 mt-1">{t('welcome')}</p>
               </div>
             </div>
 
@@ -364,7 +396,7 @@ const DashboardLayout: React.FC<{ role: UserRole; onLogout: () => void; onRoleSw
                 <Search className={`absolute ${isRtl ? 'right-4' : 'left-4'} top-1/2 -translate-y-1/2 text-slate-400 group-hover:text-indigo-500 transition-colors`} size={20} />
                 <input
                   type="text"
-                  placeholder={isRtl ? "ابحث عن طالب، فاتورة، أو إعداد..." : "Search for student, invoice, or setting..."}
+                  placeholder={t('search_placeholder')}
                   className="w-full bg-slate-50/80 border-2 border-transparent focus:bg-white focus:border-indigo-100 focus:shadow-lg focus:shadow-indigo-100/50 rounded-2xl py-3.5 px-12 text-sm font-bold text-slate-700 placeholder:text-slate-400 outline-none transition-all duration-300"
                 />
                 <div className={`absolute ${isRtl ? 'left-3' : 'right-3'} top-1/2 -translate-y-1/2 flex gap-1`}>
@@ -374,6 +406,14 @@ const DashboardLayout: React.FC<{ role: UserRole; onLogout: () => void; onRoleSw
             </div>
 
             <div className="flex items-center gap-6">
+              <button
+                onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')}
+                className="p-3 text-slate-400 hover:text-indigo-600 hover:bg-slate-50 rounded-2xl transition-all group flex items-center gap-2"
+              >
+                <Languages size={22} className="group-hover:scale-110 transition-transform" />
+                <span className="text-[10px] font-black uppercase hidden xl:block">{lang === 'ar' ? 'English' : 'العربية'}</span>
+              </button>
+
               <button className="relative p-3 text-slate-400 hover:text-indigo-600 hover:bg-slate-50 rounded-2xl transition-all group">
                 <Bell size={22} className="group-hover:animate-swing" />
                 <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-white animate-pulse"></span>

@@ -15,7 +15,7 @@ interface ViewProps {
 }
 
 const TeacherView: React.FC<ViewProps> = ({ onNavigate }) => {
-   const { lang, user, allUsers } = useAppContext();
+   const { lang, t, user, allUsers } = useAppContext();
    const isRtl = lang === 'ar';
 
    const studentCount = allUsers.filter(u => u.role === UserRole.STUDENT).length;
@@ -38,7 +38,7 @@ const TeacherView: React.FC<ViewProps> = ({ onNavigate }) => {
                      <div className="flex flex-wrap justify-center md:justify-start gap-2 md:gap-4 items-center">
                         <div className="flex items-center gap-2 px-3 md:px-4 py-1 bg-emerald-50 text-emerald-600 rounded-full border border-emerald-100">
                            <Activity size={12} />
-                           <span className="text-[10px] font-black uppercase tracking-widest">Active Now</span>
+                           <span className="text-[10px] font-black uppercase tracking-widest">{t('active_now')}</span>
                         </div>
                         <p className="text-[10px] md:text-xs font-bold text-slate-400">{isRtl ? 'كبير معلمي الفيزياء' : 'Senior Physics Instructor'}</p>
                      </div>
@@ -51,14 +51,14 @@ const TeacherView: React.FC<ViewProps> = ({ onNavigate }) => {
                      className="flex-1 md:flex-none px-6 md:px-8 py-3 md:py-4 bg-orange-500 text-white rounded-xl md:rounded-2xl font-black text-xs md:text-sm flex items-center justify-center gap-3 hover:scale-105 transition-all shadow-lg shadow-orange-500/20"
                   >
                      <BrainCircuit size={20} />
-                     {isRtl ? 'اختبار ذكي' : 'AI Builder'}
+                     {t('ai_builder_btn')}
                   </button>
                   <button
                      onClick={() => onNavigate('live_broadcast')}
                      className="flex-1 md:flex-none px-6 md:px-8 py-3 md:py-4 bg-rose-600 text-white rounded-xl md:rounded-2xl font-black text-xs md:text-sm flex items-center justify-center gap-3 hover:scale-105 transition-all shadow-lg shadow-rose-600/20"
                   >
                      <MonitorPlay size={20} />
-                     {isRtl ? 'بث مباشر' : 'Go Live'}
+                     {t('go_live')}
                   </button>
                </div>
             </div>
@@ -66,10 +66,10 @@ const TeacherView: React.FC<ViewProps> = ({ onNavigate }) => {
 
          {/* 2. Key Stats Grid */}
          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <StatCard label="إجمالي الطلاب" val={studentCount} icon={<Users />} color="text-blue-600" bg="bg-blue-50" />
-            <StatCard label="الاختبارات النشطة" val={12} icon={<ListChecks />} color="text-rose-600" bg="bg-rose-50" />
-            <StatCard label="ساعات البث" val="45h" icon={<Video />} color="text-purple-600" bg="bg-purple-50" />
-            <StatCard label="تقييم الطلاب" val="4.9" icon={<Star />} color="text-amber-500" bg="bg-amber-50" />
+            <StatCard label={t('stat_total_students')} val={studentCount} icon={<Users />} color="text-blue-600" bg="bg-blue-50" />
+            <StatCard label={t('stat_active_exams')} val={12} icon={<ListChecks />} color="text-rose-600" bg="bg-rose-50" />
+            <StatCard label={t('stat_broadcast_hours')} val="45h" icon={<Video />} color="text-purple-600" bg="bg-purple-50" />
+            <StatCard label={t('stat_student_rating')} val="4.9" icon={<Star />} color="text-amber-500" bg="bg-amber-50" />
          </div>
 
          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
@@ -84,17 +84,17 @@ const TeacherView: React.FC<ViewProps> = ({ onNavigate }) => {
 
                {/* 4. Content Quick Links */}
                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                  <QuickTool icon={<FileUp />} label="رفع ملف" onClick={() => onNavigate('files')} color="bg-blue-600" />
-                  <QuickTool icon={<Award />} label="أوائل الطلاب" onClick={() => onNavigate('students')} color="bg-amber-500" />
-                  <QuickTool icon={<Clock />} label="الجدول" onClick={() => onNavigate('overview')} color="bg-emerald-600" />
-                  <QuickTool icon={<PlusCircle />} label="مجموعة جديدة" onClick={() => onNavigate('students')} color="bg-slate-900" />
+                  <QuickTool icon={<FileUp />} label={t('tool_upload_file')} onClick={() => onNavigate('files')} color="bg-blue-600" />
+                  <QuickTool icon={<Award />} label={t('tool_top_students')} onClick={() => onNavigate('students')} color="bg-amber-500" />
+                  <QuickTool icon={<Clock />} label={t('tool_schedule')} onClick={() => onNavigate('overview')} color="bg-emerald-600" />
+                  <QuickTool icon={<PlusCircle />} label={t('tool_new_group')} onClick={() => onNavigate('students')} color="bg-slate-900" />
                </div>
             </div>
 
             {/* 5. Performance Monitoring Side Panel */}
             <div className="glass-card p-10 bg-white border border-slate-200">
                <h3 className="text-sm font-black uppercase tracking-widest text-slate-500 mb-8 flex items-center gap-3">
-                  <TrendingUp size={18} className="text-blue-600" /> {isRtl ? 'تحليل الأداء' : 'Performance Analysis'}
+                  <TrendingUp size={18} className="text-blue-600" /> {t('performance_analysis')}
                </h3>
                <div className="space-y-8">
                   <ProgressBar label="الفيزياء الحديثة" val={92} color="bg-blue-600" />
@@ -104,7 +104,7 @@ const TeacherView: React.FC<ViewProps> = ({ onNavigate }) => {
                <div className="mt-10 p-6 bg-slate-50 rounded-3xl border border-dashed border-slate-200">
                   <div className="flex items-center gap-4 mb-3">
                      <Zap className="text-orange-500" size={20} />
-                     <p className="text-xs font-black">{isRtl ? 'تنبيه ذكي' : 'Smart Insight'}</p>
+                     <p className="text-xs font-black">{t('smart_insight')}</p>
                   </div>
                   <p className="text-[10px] font-bold text-slate-500 leading-relaxed">
                      {isRtl ? 'تحسن مستوى مجموعة "العباقرة" بنسبة 15% بعد الاختبار الأخير.' : 'Elite group improved by 15% after the last quiz.'}

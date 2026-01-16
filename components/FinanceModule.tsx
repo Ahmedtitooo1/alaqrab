@@ -34,7 +34,9 @@ const FinanceModule: React.FC<FinanceModuleProps> = ({ initialMode = 'list' }) =
       date: new Date().toISOString().split('T')[0],
       description: '',
       fundAccount: '11101',
-      totalAmount: 0
+      totalAmount: 0,
+      currency: 'EGP',
+      exchangeRate: 1
    });
 
    const [lines, setLines] = useState<any[]>([
@@ -139,7 +141,9 @@ const FinanceModule: React.FC<FinanceModuleProps> = ({ initialMode = 'list' }) =
             amount: parseFloat(line.amount),
             debitAccount: voucherType === 'spending' ? line.category : header.fundAccount,
             creditAccount: voucherType === 'spending' ? header.fundAccount : line.category,
-            refType: 'manual'
+            refType: 'manual',
+            currency: (header as any).currency,
+            exchangeRate: (header as any).exchangeRate
          };
          addFinancialEntry(entry);
       });
@@ -333,6 +337,21 @@ const FinanceModule: React.FC<FinanceModuleProps> = ({ initialMode = 'list' }) =
                                  <select value={header.fundAccount} onChange={e => setHeader({ ...header, fundAccount: e.target.value })} className="w-full p-4 bg-indigo-50/50 border-2 border-transparent focus:border-indigo-600 rounded-2xl font-black text-sm outline-none shadow-inner">
                                     {funds.map(f => <option key={f.id} value={f.accountCode}>{f.name} ({f.balance.toLocaleString()} ج.م)</option>)}
                                  </select>
+                              </div>
+                              <div className="grid grid-cols-2 gap-4">
+                                 <div className="space-y-1">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">العملة</label>
+                                    <select value={(header as any).currency} onChange={e => setHeader({ ...header, currency: e.target.value })} className="w-full p-4 bg-slate-50 border-2 border-transparent focus:border-indigo-600 rounded-2xl font-black text-sm outline-none shadow-inner">
+                                       <option value="EGP">EGP (جنيه مصري)</option>
+                                       <option value="USD">USD (دولار أمريكي)</option>
+                                       <option value="SAR">SAR (ريال سعودي)</option>
+                                       <option value="EUR">EUR (يورو)</option>
+                                    </select>
+                                 </div>
+                                 <div className="space-y-1">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">سعر الصرف</label>
+                                    <input type="number" step="0.01" value={(header as any).exchangeRate} onChange={e => setHeader({ ...header, exchangeRate: parseFloat(e.target.value) })} className="w-full p-4 bg-slate-50 border-2 border-transparent focus:border-indigo-600 rounded-2xl font-black text-sm outline-none shadow-inner" />
+                                 </div>
                               </div>
                            </div>
                         </div>

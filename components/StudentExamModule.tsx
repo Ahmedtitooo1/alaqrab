@@ -110,7 +110,14 @@ const StudentExamModule: React.FC<{ mode?: 'hall' | 'results' }> = ({ mode = 'ha
       setIsSubmitting(true);
       let score = 0;
       shuffledQuestions.forEach(q => {
-         if (q.type !== QuestionType.SHORT_ESSAY) {
+         if (q.type === QuestionType.HOTSPOT) {
+            const studentAns = answers[q.id];
+            const correct = q.correctPoint;
+            if (studentAns && correct) {
+               const dist = Math.sqrt(Math.pow(studentAns.x - correct.x, 2) + Math.pow(studentAns.y - correct.y, 2));
+               if (dist < 8) score += q.points;
+            }
+         } else if (q.type !== QuestionType.SHORT_ESSAY) {
             if (answers[q.id] === q.correctAnswer) score += q.points;
          } else {
             if (answers[q.id] && answers[q.id].length > 10) score += q.points;
@@ -181,8 +188,18 @@ const StudentExamModule: React.FC<{ mode?: 'hall' | 'results' }> = ({ mode = 'ha
             </div>
             <div className="space-y-6">
                {currentReview?.questions.map((q: any, idx: number) => {
-                  const studentAns = currentReview.studentAnswers[q.id] || "لم يتم الإجابة";
-                  const isCorrect = q.type !== QuestionType.SHORT_ESSAY ? studentAns === q.correctAnswer : true;
+                  const studentAns = currentReview.studentAnswers[q.id];
+                  let isCorrect = false;
+                  if (q.type === QuestionType.HOTSPOT) {
+                     if (studentAns && q.correctPoint) {
+                        const dist = Math.sqrt(Math.pow(studentAns.x - q.correctPoint.x, 2) + Math.pow(studentAns.y - q.correctPoint.y, 2));
+                        isCorrect = dist < 8;
+                     }
+                  } else if (q.type !== QuestionType.SHORT_ESSAY) {
+                     isCorrect = studentAns === q.correctAnswer;
+                  } else {
+                     isCorrect = true;
+                  }
                   return (
                      <div key={q.id} className={`p-8 bg-white border-2 rounded-[2.5rem] relative overflow-hidden ${isCorrect ? 'border-emerald-100 shadow-sm' : 'border-rose-100 shadow-sm'}`}>
                         <div className={`absolute top-0 right-0 w-2 h-full ${isCorrect ? 'bg-emerald-500' : 'bg-rose-500'}`}></div>
@@ -196,12 +213,26 @@ const StudentExamModule: React.FC<{ mode?: 'hall' | 'results' }> = ({ mode = 'ha
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                            <div className="p-5 bg-slate-50 rounded-2xl border">
                               <p className="text-[10px] font-black text-slate-400 mb-1 uppercase tracking-widest">إجابتك</p>
-                              <p className="font-bold text-slate-700">{studentAns === 'true' ? 'صح' : studentAns === 'false' ? 'خطأ' : studentAns}</p>
+                              {q.type === QuestionType.HOTSPOT ? (
+                                 <div className="relative inline-block mt-2">
+                                    <img src={q.image} className="max-w-[200px] h-auto rounded-lg" alt="Your answer" />
+                                    {studentAns && <div className="absolute w-4 h-4 bg-indigo-600 rounded-full -translate-x-1/2 -translate-y-1/2 border-2 border-white" style={{ left: `${studentAns.x}%`, top: `${studentAns.y}%` }}></div>}
+                                 </div>
+                              ) : (
+                                 <p className="font-bold text-slate-700">{studentAns === 'true' ? 'صح' : studentAns === 'false' ? 'خطأ' : studentAns || 'لم يتم الإجابة'}</p>
+                              )}
                            </div>
                            {!isCorrect && (
                               <div className="p-5 bg-emerald-50 rounded-2xl border border-emerald-100">
                                  <p className="text-[10px] font-black text-emerald-600 mb-1 uppercase tracking-widest">الإجابة النموذجية</p>
-                                 <p className="font-bold text-emerald-700">{q.correctAnswer === 'true' ? 'صح' : q.correctAnswer}</p>
+                                 {q.type === QuestionType.HOTSPOT ? (
+                                    <div className="relative inline-block mt-2">
+                                       <img src={q.image} className="max-w-[200px] h-auto rounded-lg" alt="Correct Answer" />
+                                       <div className="absolute w-4 h-4 bg-emerald-500 rounded-full -translate-x-1/2 -translate-y-1/2 border-2 border-white" style={{ left: `${q.correctPoint.x}%`, top: `${q.correctPoint.y}%` }}></div>
+                                    </div>
+                                 ) : (
+                                    <p className="font-bold text-emerald-700">{q.correctAnswer === 'true' ? 'صح' : q.correctAnswer}</p>
+                                 )}
                               </div>
                            )}
                         </div>
@@ -249,6 +280,33 @@ const StudentExamModule: React.FC<{ mode?: 'hall' | 'results' }> = ({ mode = 'ha
                               <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center ${answers[q.id] === opt.id ? 'bg-white text-indigo-600 border-white' : 'border-slate-300'}`}>{answers[q.id] === opt.id && <Check size={20} strokeWidth={4} />}</div>
                            </button>
                         ))}
+                     </div>
+                  )}
+                  {q.type === QuestionType.HOTSPOT && (
+                     <div className="space-y-6 animate-view">
+                        <div className="bg-slate-50 rounded-[3rem] border-2 border-dashed flex flex-col items-center justify-center text-slate-400 overflow-hidden relative shadow-inner">
+                           {q.image ? (
+                              <div className="relative group/answer" onClick={(e) => {
+                                 const rect = e.currentTarget.getBoundingClientRect();
+                                 const x = ((e.clientX - rect.left) / rect.width) * 100;
+                                 const y = ((e.clientY - rect.top) / rect.height) * 100;
+                                 setAnswers({ ...answers, [q.id]: { x, y } });
+                              }}>
+                                 <img src={q.image} className="max-w-full h-auto cursor-crosshair" alt="Hotspot" />
+                                 {answers[q.id] && (
+                                    <div
+                                       className="absolute w-12 h-12 border-4 border-indigo-600 rounded-full -translate-x-1/2 -translate-y-1/2 shadow-2xl bg-indigo-600/30 ring-4 ring-white/50 flex items-center justify-center"
+                                       style={{ left: `${answers[q.id].x}%`, top: `${answers[q.id].y}%` }}
+                                    >
+                                       <Target className="text-indigo-600 drop-shadow-lg" size={24} />
+                                    </div>
+                                 )}
+                                 <div className="absolute inset-0 bg-black/5 opacity-0 group-hover/answer:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                                    <div className="bg-white/90 px-6 py-3 rounded-2xl text-[11px] font-black text-slate-900 shadow-xl border border-white">انقر على الموقع الذي تراه صحيحاً</div>
+                                 </div>
+                              </div>
+                           ) : <div className="p-20 text-center italic font-bold">لا يوجد صورة لهذا السؤال</div>}
+                        </div>
                      </div>
                   )}
                </div>

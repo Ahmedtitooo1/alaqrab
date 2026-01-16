@@ -2,6 +2,7 @@
 export enum UserRole {
   GUEST = 'guest',
   SUPER_ADMIN = 'super_admin',
+  DEVELOPER = 'developer',
   ADMIN = 'admin',
   TEACHER = 'teacher',
   STUDENT = 'student',
@@ -37,7 +38,8 @@ export enum QuestionType {
   TRUE_FALSE = 'true_false',
   SINGLE_CHOICE = 'single_choice',
   SHORT_ESSAY = 'short_essay',
-  IMAGE_CHOICE = 'image_choice'
+  IMAGE_CHOICE = 'image_choice',
+  HOTSPOT = 'hotspot'
 }
 
 export interface User {
@@ -45,13 +47,15 @@ export interface User {
   code: string;
   firstName: string;
   lastName: string;
-  username?: string; 
+  username?: string;
   role: UserRole;
   institutionId: string;
   teacherId?: string;
+  teacherIds?: string[];
   parentId?: string;
   email?: string;
   phone?: string;
+  status?: 'active' | 'inactive' | 'suspended';
   aiQuestionsCount: number;
   salary?: number;
   allowances?: number;
@@ -60,6 +64,11 @@ export interface User {
   balance?: number;
   subscriptionAmount?: number;
   nextRenewalDate?: string;
+  maxStudents?: number; // Added for teacher capacity
+  teacherCapacity?: number;
+  avatar?: string;
+  iban?: string;
+  bankName?: string;
 }
 
 export interface PaymentLog {
@@ -107,14 +116,14 @@ export interface FinancialCategory {
   type: 'asset' | 'liability' | 'equity' | 'income' | 'expense';
   parentId?: string;
   level: number;
-  isDynamic?: boolean; 
+  isDynamic?: boolean;
 }
 
 export interface VoucherLine {
   id: string;
   description: string;
   amount: number;
-  accountId: string; 
+  accountId: string;
 }
 
 export interface FinancialEntry {
@@ -124,9 +133,11 @@ export interface FinancialEntry {
   amount: number;
   debitAccount: string;
   creditAccount: string;
+  currency?: string;      // Added for multi-currency
+  exchangeRate?: number;  // Added for multi-currency
   refType?: 'payroll' | 'inventory' | 'subscription' | 'manual' | 'transfer';
-  attachment?: string; 
-  lines?: VoucherLine[]; 
+  attachment?: string;
+  lines?: VoucherLine[];
   isPosted?: boolean;
   isCanceled?: boolean;
 }
@@ -134,9 +145,19 @@ export interface FinancialEntry {
 export interface FinancialFund {
   id: string;
   name: string;
-  type: 'cash' | 'bank';
+  type: 'cash' | 'bank' | 'e-wallet';
   balance: number;
   accountCode: string;
+  // بيانات الدفع الإلكتروني
+  bankName?: string;
+  accountNumber?: string;
+  iban?: string;
+  walletNumber?: string;
+  walletProvider?: 'vodafone-cash' | 'orange-cash' | 'etisalat-cash' | 'instapay' | 'other';
+  qrCode?: string;
+  isActiveForParentPayments?: boolean;
+  fundImage?: string; // URL or Base64 of the fund image (QR, Screenshot, etc.)
+  bankAccountNum?: string;
 }
 
 export interface Liability {
@@ -165,7 +186,7 @@ export interface InventoryItem {
 export interface InventoryTransaction {
   id: string;
   itemId: string;
-  type: 'in' | 'out'; 
+  type: 'in' | 'out';
   quantity: number;
   date: string;
   description: string;
@@ -226,4 +247,124 @@ export interface Announcement {
   mediaUrl?: string;
   mediaType?: string;
   eventDate?: string;
+}
+
+export interface Exam {
+  id: string;
+  title: string;
+  subject: string;
+  duration: number;
+  totalPoints: number;
+  questions: Question[];
+  status: 'draft' | 'published' | 'archived';
+  security: {
+    preventCheating: boolean;
+    showInstantResults: boolean;
+    allowReview: boolean;
+    timerVisible: boolean;
+  }
+}
+
+export interface Assignment {
+  id: string;
+  title: string;
+  description: string;
+  dueDate: string;
+  points: number;
+  subject: string;
+  teacherId: string;
+  status: 'active' | 'closed';
+  attachmentUrl?: string;
+  questions?: Question[];
+}
+
+export interface AssignmentSubmission {
+  id: string;
+  assignmentId: string;
+  studentId: string;
+  studentName: string;
+  submissionDate: string;
+  status: 'pending' | 'graded' | 'returned';
+  comment?: string;
+  score?: number;
+  files: { url: string; type: 'image' | 'pdf' }[];
+}
+
+export interface StudentProgress {
+  userId: string;
+  subject: string;
+  monthlyScores: { month: string; score: number }[];
+  attendanceRate: number;
+  strengths: string[];
+  weaknesses: string[];
+  recommendations: string[];
+}
+
+export interface AttendanceRecord {
+  id: string;
+  date: string;
+  institutionId: string;
+  studentId: string;
+  status: 'present' | 'absent' | 'late' | 'excused';
+}
+
+export interface ClassSchedule {
+  id: string;
+  subject: string;
+  teacherId: string;
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
+  room?: string;
+}
+
+export interface MarketplaceItem {
+  id: string;
+  title: string;
+  type: 'course' | 'exam' | 'summary' | 'video';
+  price: number;
+  teacherId: string;
+  teacherName: string;
+  description: string;
+  thumbnail?: string;
+  contentUrl?: string;
+  status: 'pending' | 'active' | 'archived';
+  salesCount: number;
+  commission: number;
+}
+
+export interface Achievement {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  points: number;
+  type: 'streak' | 'exam_score' | 'attendance' | 'special';
+}
+
+export interface LearningPath {
+  id: string;
+  title: string;
+  studentId: string;
+  steps: {
+    id: string;
+    title: string;
+    type: 'video' | 'quiz' | 'file';
+    targetId: string;
+    isCompleted: boolean;
+    unlockCondition?: {
+      minScore?: number;
+      previousStepId?: string;
+    }
+  }[];
+  progress: number;
+}
+
+export interface ProctoringLog {
+  id: string;
+  examId: string;
+  studentId: string;
+  timestamp: string;
+  event: 'tab_switch' | 'minimized' | 'external_click';
+  duration?: number;
 }

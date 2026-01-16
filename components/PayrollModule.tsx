@@ -264,8 +264,8 @@ const PayrollModule: React.FC = () => {
          )}
 
          {showPayModal && (
-            <div className="fixed inset-0 z-[1000] bg-slate-950/80 backdrop-blur-xl flex items-center justify-center p-6 no-print">
-               <div className="glass-panel w-full max-w-lg bg-white p-12 rounded-[3.5rem] shadow-3xl space-y-10 border-t-[12px] border-emerald-600">
+            <div className="fixed inset-0 z-[1000] bg-slate-950/80 backdrop-blur-xl flex items-center justify-center p-6 no-print" onClick={() => setShowPayModal(false)}>
+               <div className="glass-panel w-full max-w-lg bg-white p-12 rounded-[3.5rem] shadow-3xl space-y-10 border-t-[12px] border-emerald-600" onClick={e => e.stopPropagation()}>
                   <div className="flex justify-between items-center border-b pb-6"><h3 className="text-2xl font-black">تأكيد عملية السداد المجمع</h3><button onClick={() => setShowPayModal(false)}><X size={32} /></button></div>
                   <div className="space-y-8">
                      <div className="p-8 bg-emerald-50 rounded-[2.5rem] border-2 border-dashed border-emerald-200 text-center relative overflow-hidden">
