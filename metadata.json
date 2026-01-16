@@ -1,0 +1,8 @@
+{
+  "name": " منظومة العقرب S.S.S vs1",
+  "description": "نظام تعليمي متكامل مدعوم بالذكاء الاصطناعي مع إدارة مالية ومخزنية متطورة.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
