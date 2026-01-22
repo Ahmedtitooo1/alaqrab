@@ -2,13 +2,13 @@
 export enum UserRole {
   GUEST = 'guest',
   SUPER_ADMIN = 'super_admin',
-  DEVELOPER = 'developer',
   ADMIN = 'admin',
   TEACHER = 'teacher',
   STUDENT = 'student',
   ACCOUNTANT = 'accountant',
   PARENT = 'parent',
-  ANNOUNCER = 'announcer'
+  ANNOUNCER = 'announcer',
+  SECRETARY = 'secretary'
 }
 
 export enum ClientType {
@@ -21,6 +21,14 @@ export enum PricingModel {
   MONTHLY = 'monthly',
   YEARLY = 'yearly',
   PER_STUDENT = 'per_student'
+}
+
+export interface Currency {
+  code: string;
+  name: string;
+  symbol: string;
+  exchangeRate: number;
+  isBase: boolean;
 }
 
 export enum AnnouncementStatus {
@@ -51,11 +59,9 @@ export interface User {
   role: UserRole;
   institutionId: string;
   teacherId?: string;
-  teacherIds?: string[];
   parentId?: string;
   email?: string;
   phone?: string;
-  status?: 'active' | 'inactive' | 'suspended';
   aiQuestionsCount: number;
   salary?: number;
   allowances?: number;
@@ -63,12 +69,12 @@ export interface User {
   jobTitle?: string;
   balance?: number;
   subscriptionAmount?: number;
+  paidAmount?: number;
   nextRenewalDate?: string;
-  maxStudents?: number; // Added for teacher capacity
-  teacherCapacity?: number;
-  avatar?: string;
-  iban?: string;
-  bankName?: string;
+  // Academic Structure Extras
+  academicYearId?: string;
+  gradeLevelId?: string;
+  enrolledSubjectIds?: string[];
 }
 
 export interface PaymentLog {
@@ -102,11 +108,14 @@ export interface Institution {
     model: PricingModel;
     totalAmount: number;
     paidAmount: number;
+    revenue?: number; // Added to fix implicit revenue prop
   };
   paymentHistory: PaymentLog[];
   expiryDate: string;
   status: string;
   revenue: number;
+  defaultCurrency?: string;
+  currencies?: Currency[];
 }
 
 export interface FinancialCategory {
@@ -117,13 +126,22 @@ export interface FinancialCategory {
   parentId?: string;
   level: number;
   isDynamic?: boolean;
+  institutionId: string;
 }
 
 export interface VoucherLine {
   id: string;
   description: string;
   amount: number;
+  publicAccountNumber?: string;
+  isPublicToGuardians?: boolean;
+  accountDescription?: string;
   accountId: string;
+  // Added for entity linking and improved UI state
+  category?: string;
+  entityType?: string;
+  subTargetId?: string;
+  subTargetSearch?: string;
 }
 
 export interface FinancialEntry {
@@ -133,31 +151,41 @@ export interface FinancialEntry {
   amount: number;
   debitAccount: string;
   creditAccount: string;
-  currency?: string;      // Added for multi-currency
-  exchangeRate?: number;  // Added for multi-currency
-  refType?: 'payroll' | 'inventory' | 'subscription' | 'manual' | 'transfer';
+  institutionId: string;
+  refType?: 'payroll' | 'inventory' | 'subscription' | 'manual' | 'transfer' | 'journal' | 'adjustment' | 'expense' | 'payment' | 'invoice';
   attachment?: string;
   lines?: VoucherLine[];
+  costCenter?: string;
+  currency?: string;
+  exchangeRate?: number;
   isPosted?: boolean;
   isCanceled?: boolean;
+  targetId?: string; // To link with student/employee/supplier
+  taxAmount?: number;
+  netAmount?: number;
+  status?: 'draft' | 'posted';
+  invoiceNumber?: string;
+}
+
+export interface FinancialSettings {
+  companyName: string;
+  taxId: string;
+  taxRate: number;
+  isTaxInclusive: boolean;
+  currency: string;
+  institutionId: string;
 }
 
 export interface FinancialFund {
   id: string;
   name: string;
-  type: 'cash' | 'bank' | 'e-wallet';
+  type: 'cash' | 'bank' | 'wallet';
   balance: number;
   accountCode: string;
-  // بيانات الدفع الإلكتروني
-  bankName?: string;
-  accountNumber?: string;
-  iban?: string;
-  walletNumber?: string;
-  walletProvider?: 'vodafone-cash' | 'orange-cash' | 'etisalat-cash' | 'instapay' | 'other';
-  qrCode?: string;
-  isActiveForParentPayments?: boolean;
-  fundImage?: string; // URL or Base64 of the fund image (QR, Screenshot, etc.)
-  bankAccountNum?: string;
+  publicAccountNumber?: string; // Appears to parents for payments
+  isPublicToGuardians?: boolean;
+  institutionId: string;
+  accountDescription?: string;
 }
 
 export interface Liability {
@@ -181,6 +209,7 @@ export interface InventoryItem {
   location: string;
   accountCode?: string;
   supplierId?: string;
+  institutionId: string;
 }
 
 export interface InventoryTransaction {
@@ -192,6 +221,8 @@ export interface InventoryTransaction {
   description: string;
   supplierId?: string;
   refNo?: string;
+  unitPrice?: number;
+  institutionId: string;
 }
 
 export interface PayrollRecord {
@@ -212,6 +243,7 @@ export interface Supplier {
   email?: string;
   address?: string;
   balance: number;
+  institutionId: string;
 }
 
 export interface Notification {
@@ -221,6 +253,8 @@ export interface Notification {
   date: string;
   isRead: boolean;
   type: 'info' | 'success' | 'warning' | 'error';
+  institutionId: string;
+  userId?: string;
 }
 
 export interface Question {
@@ -232,6 +266,9 @@ export interface Question {
   options?: { id: string; text: string }[];
   image?: string;
   correctPoint?: { x: number; y: number };
+  correctX?: number; // Coordinates for Hotspot
+  correctY?: number;
+  toleranceRadius?: number; // Distance tolerance in pixels (or percentage if preferred)
 }
 
 export interface Announcement {
@@ -243,26 +280,11 @@ export interface Announcement {
   date: string;
   authorId: string;
   authorName: string;
-  authorRole: UserRole;
+  authorRole: UserRole | string;
   mediaUrl?: string;
   mediaType?: string;
   eventDate?: string;
-}
-
-export interface Exam {
-  id: string;
-  title: string;
-  subject: string;
-  duration: number;
-  totalPoints: number;
-  questions: Question[];
-  status: 'draft' | 'published' | 'archived';
-  security: {
-    preventCheating: boolean;
-    showInstantResults: boolean;
-    allowReview: boolean;
-    timerVisible: boolean;
-  }
+  institutionId: string;
 }
 
 export interface Assignment {
@@ -270,24 +292,68 @@ export interface Assignment {
   title: string;
   description: string;
   dueDate: string;
-  points: number;
-  subject: string;
-  teacherId: string;
-  status: 'active' | 'closed';
-  attachmentUrl?: string;
+  courseId?: string;
+  subject?: string;
+  teacherId?: string;
+  status?: string;
+  points?: number;
   questions?: Question[];
+  studentsSubmitted?: number;
 }
 
 export interface AssignmentSubmission {
   id: string;
   assignmentId: string;
   studentId: string;
-  studentName: string;
-  submissionDate: string;
-  status: 'pending' | 'graded' | 'returned';
-  comment?: string;
-  score?: number;
-  files: { url: string; type: 'image' | 'pdf' }[];
+  studentName?: string;
+  fileUrl?: string;
+  files?: { url: string; type: string }[];
+  submittedAt: string;
+  submissionDate?: string;
+  status?: string;
+  grade?: number;
+}
+
+export interface LearningPath {
+  id: string;
+  studentId?: string;
+  title: string;
+  description: string;
+  modules: { id: string; title: string; isCompleted: boolean }[];
+  steps?: {
+    id: string;
+    title: string;
+    isCompleted: boolean;
+    type?: string;
+    targetId?: string;
+    unlockCondition?: { previousStepId: string; minScore?: number };
+  }[];
+  progress: number;
+}
+
+export interface MarketplaceItem {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  author: string;
+  rating: number;
+  sales: number;
+  image?: string;
+  category: string;
+  teacherName?: string;
+  type?: 'course' | 'exam' | 'summary' | 'video';
+  thumbnail?: string;
+  salesCount?: number;
+}
+
+export interface ProctoringLog {
+  id: string;
+  studentId: string;
+  examId: string;
+  action: string;
+  timestamp: string;
+  severity: 'low' | 'medium' | 'high';
 }
 
 export interface StudentProgress {
@@ -300,37 +366,40 @@ export interface StudentProgress {
   recommendations: string[];
 }
 
-export interface AttendanceRecord {
+export interface PaymentRequest {
   id: string;
-  date: string;
-  institutionId: string;
   studentId: string;
-  status: 'present' | 'absent' | 'late' | 'excused';
+  studentName: string;
+  parentId: string;
+  parentName: string;
+  amount: number;
+  paymentMethod: string;
+  fundId: string;
+  fundName: string;
+  status: 'pending' | 'approved' | 'rejected';
+  submittedDate: string;
+  reviewedDate?: string;
+  reviewedBy?: string;
+  receiptData?: {
+    transactionId: string;
+    paymentDate: string;
+    accountNumber?: string;
+    walletNumber?: string;
+    screenshot?: string;
+  };
+  notes?: string;
 }
 
-export interface ClassSchedule {
-  id: string;
-  subject: string;
-  teacherId: string;
-  dayOfWeek: number;
-  startTime: string;
-  endTime: string;
-  room?: string;
-}
-
-export interface MarketplaceItem {
+export interface Exam {
   id: string;
   title: string;
-  type: 'course' | 'exam' | 'summary' | 'video';
-  price: number;
-  teacherId: string;
-  teacherName: string;
-  description: string;
-  thumbnail?: string;
-  contentUrl?: string;
-  status: 'pending' | 'active' | 'archived';
-  salesCount: number;
-  commission: number;
+  subject: string;
+  duration: number;
+  totalPoints: number;
+  questions: Question[];
+  status: 'draft' | 'published' | 'archived';
+  institutionId: string;
+  teacherId?: string;
 }
 
 export interface Achievement {
@@ -342,29 +411,154 @@ export interface Achievement {
   type: 'streak' | 'exam_score' | 'attendance' | 'special';
 }
 
-export interface LearningPath {
+// --- 1. Business & Admin Extras ---
+
+export interface CustomFieldDefinition {
   id: string;
-  title: string;
-  studentId: string;
-  steps: {
-    id: string;
-    title: string;
-    type: 'video' | 'quiz' | 'file';
-    targetId: string;
-    isCompleted: boolean;
-    unlockCondition?: {
-      minScore?: number;
-      previousStepId?: string;
-    }
-  }[];
-  progress: number;
+  label: string;
+  key: string;
+  type: 'text' | 'number' | 'date' | 'select' | 'boolean';
+  required: boolean;
+  options?: string[];
+  targetRole: UserRole;
+  institutionId: string;
 }
 
-export interface ProctoringLog {
+export interface GradingFormula {
   id: string;
-  examId: string;
+  name: string;
+  subjectId?: string;
+  components: {
+    name: string;
+    weight: number;
+    maxScore: number;
+  }[];
+  createdAt: string;
+  institutionId: string;
+}
+
+// --- 2. Operations & Student Extras ---
+
+export interface BehaviorRecord {
+  id: string;
   studentId: string;
-  timestamp: string;
-  event: 'tab_switch' | 'minimized' | 'external_click';
-  duration?: number;
+  studentName: string;
+  date: string;
+  type: 'violation' | 'positive';
+  category: 'attendance' | 'conduct' | 'academic' | 'other';
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  description: string;
+  actionTaken?: string;
+  reportedBy: string;
+  institutionId: string;
+}
+
+export interface CertificateTemplate {
+  id: string;
+  name: string;
+  type?: 'course' | 'achievement' | 'appreciation';
+  backgroundImage: string;
+  elements?: any[];
+  layout?: any;
+  createdAt: string;
+  institutionId: string;
+
+}
+
+export interface InternalTicket {
+  id: string;
+  title: string;
+  description: string;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  status: 'open' | 'in_progress' | 'resolved' | 'closed';
+  category: 'maintenance' | 'it' | 'supplies' | 'other';
+  createdBy: string;
+  assignedTo?: string;
+  createdAt: string;
+  updatedAt: string;
+  comments?: { userId: string; text: string; date: string }[];
+  institutionId: string;
+}
+
+// --- 3. Accounting Micro-Features ---
+
+export interface FamilyWallet {
+  parentId: string;
+  balance: number;
+  linkedStudentIds: string[];
+  institutionId: string;
+  transactions: {
+    id: string;
+    date: string;
+    amount: number;
+    type: 'deposit' | 'deduction';
+    description: string;
+    studentId?: string;
+  }[];
+}
+
+export interface AdjustmentRequest {
+  id: string;
+  studentId: string;
+  amount: number;
+  reasonCategory: 'scholarship' | 'sibling_discount' | 'admin_decision' | 'penalty';
+  description: string;
+  requestedBy: string;
+  approvedBy?: string;
+  status: 'pending' | 'approved' | 'rejected';
+  date: string;
+  institutionId: string;
+}
+
+// Data Requested by User for UI
+export interface PaymentRecord {
+  id: string;
+  amount: number;
+  status: 'pending' | 'approved' | 'rejected';
+  date: string;
+  receiptUrl?: string; // Optional URL to receipt image
+}
+
+export interface ExamResult {
+  score: number;
+  subject: string;
+  feedback?: string;
+  badgeType?: 'gold' | 'silver' | 'bronze' | 'none';
+}
+
+// --- 4. Academic Structure (Center Mode) ---
+export interface AcademicYear {
+  id: string;
+  name: string; // e.g., "2025-2026"
+  startDate: string;
+  endDate: string;
+  isCurrent: boolean;
+  institutionId: string;
+}
+
+export interface Subject {
+  id: string;
+  name: string; // e.g., "Physics"
+  code?: string;
+  gradeLevelId: string; // Linked to a grade level
+  assignedTeacherIds?: string[]; // IDs of teachers teaching this subject
+}
+
+export interface GradeLevel {
+  id: string;
+  name: string; // e.g., "Grade 10"
+  subjects: Subject[];
+  institutionId: string;
+}
+
+// --- Timetable ---
+export interface TimetableEntry {
+  id: string;
+  day: 'Sunday' | 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday';
+  periodIndex: number; // 0 for 1st period, etc.
+  subjectId: string;
+  teacherId: string;
+  roomId?: string; // Room ID or name
+  gradeLevelId: string;
+  institutionId: string;
 }

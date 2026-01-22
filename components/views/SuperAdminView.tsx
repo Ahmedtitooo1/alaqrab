@@ -8,56 +8,32 @@ import {
    School, CheckCircle, Package, MonitorPlay, Check,
    RefreshCw, DollarSign, Calculator, ChevronRight, UserCircle, Activity, PlayCircle, LogIn,
    Layout, Palette, MessageSquare, Key, UserCheck, ShieldAlert, Zap,
-   Wallet, Search, Trash2, ArrowUpRight, TrendingUp, History, Info, Layers, Camera, BarChart3
+   Wallet, Search, Trash2, ArrowUpRight, TrendingUp, History, Info, Layers
 } from 'lucide-react';
 import { useAppContext } from '../../context/AppContext';
-import SmartAnalytic from '../SmartAnalytic';
 import { ClientType, PricingModel, Institution, UserRole, User } from '../../types';
 
-import { PermissionsManager } from '../PermissionsManager';
-
 interface SuperAdminViewProps {
-   mode: 'overview' | 'simulation' | 'subscriptions' | 'permissions' | 'system_settings';
+   mode: 'overview' | 'simulation' | 'subscriptions' | 'system_updates';
    // Adding onNavigate prop to handle view switching
    onNavigate: (tab: string) => void;
 }
 
-const QuotaBox = ({ label, val, highlight }: any) => (
-   <div className={`p-5 rounded-3xl border transition-all text-center ${highlight ? 'bg-indigo-600 text-white shadow-xl scale-105' : 'bg-slate-50 border-slate-100 group-hover:bg-white group-hover:shadow-inner'}`}>
-      <p className={`text-[10px] font-black uppercase tracking-[0.2em] mb-2 ${highlight ? 'text-indigo-200' : 'text-slate-400'}`}>{label}</p>
-      <p className="text-3xl font-black tabular-nums leading-none">{val}</p>
-   </div>
-);
-
-const QuotaInput = ({ label, val, onChange, highlight }: any) => (
-   <div className="space-y-3 text-right">
-      <label className="text-[11px] font-black text-slate-400 uppercase px-2 tracking-widest">{label}</label>
-      <input type="number" value={val} onChange={e => onChange?.(parseInt(e.target.value) || 0)} className={`w-full p-6 rounded-[2rem] text-center font-black text-3xl border-2 shadow-inner outline-none transition-all ${highlight ? 'border-indigo-200 bg-indigo-50 text-indigo-900 focus:border-indigo-600' : 'border-slate-100 bg-white text-slate-900 focus:border-indigo-600'}`} />
-   </div>
-);
-
-const PermissionItem = ({ label, active, onClick, icon }: any) => (
-   <button onClick={onClick} className={`p-8 rounded-[3rem] border-2 transition-all flex items-center justify-between group ${active ? 'border-indigo-200 bg-indigo-50/50 shadow-sm' : 'border-slate-100 bg-white grayscale opacity-50'}`}>
-      <div className="flex items-center gap-6">
-         <div className={`p-4 rounded-2xl transition-all ${active ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>{icon}</div>
-         <span className={`text-lg font-black ${active ? 'text-indigo-950' : 'text-slate-400'}`}>{label}</span>
-      </div>
-      <div className={`w-10 h-10 rounded-full border-4 flex items-center justify-center transition-all ${active ? 'bg-indigo-600 border-indigo-100 text-white' : 'border-slate-100 text-transparent'}`}><Check size={24} strokeWidth={4} /></div>
-   </button>
-);
-
 const SuperAdminView: React.FC<SuperAdminViewProps> = ({ mode, onNavigate }) => {
-   const {
-      institutions, allUsers, updateInstitution, addInstitution,
-      startSimulation, addEmployeeRecord, addNotification,
-      systemName, setSystemName, systemLogo, setSystemLogo,
-      systemContact, setSystemContact
-   } = useAppContext();
+   const { institutions, allUsers, updateInstitution, addInstitution, startSimulation, addEmployeeRecord, addNotification } = useAppContext();
 
    const [showModal, setShowModal] = useState<boolean>(false);
    const [editingInst, setEditingInst] = useState<Institution | null>(null);
    const [activeSimulationInst, setActiveSimulationInst] = useState<string | null>(null);
    const [searchSim, setSearchSim] = useState('');
+
+   // Presets for Packages
+   const packagePresets: any = {
+      'free': { limits: { admins: 1, teachers: 2, accountants: 0, students: 100 }, permissions: { allowCustomBranding: false, allowAiCorrection: false, allowSmartAnalyst: false, allowAiUsage: false, allowFinancialLedger: false, allowLiveStreaming: false }, pricing: { model: PricingModel.MONTHLY, rate: 0 } },
+      'basic': { limits: { admins: 2, teachers: 10, accountants: 1, students: 1000 }, permissions: { allowCustomBranding: false, allowAiCorrection: true, allowSmartAnalyst: false, allowAiUsage: false, allowFinancialLedger: true, allowLiveStreaming: false }, pricing: { model: PricingModel.MONTHLY, rate: 299 } },
+      'advanced': { limits: { admins: 5, teachers: 30, accountants: 3, students: 5000 }, permissions: { allowCustomBranding: true, allowAiCorrection: true, allowSmartAnalyst: true, allowAiUsage: true, allowFinancialLedger: true, allowLiveStreaming: true }, pricing: { model: PricingModel.MONTHLY, rate: 599 } },
+      'enterprise': { limits: { admins: 50, teachers: 500, accountants: 10, students: 10000 }, permissions: { allowCustomBranding: true, allowAiCorrection: true, allowSmartAnalyst: true, allowAiUsage: true, allowFinancialLedger: true, allowLiveStreaming: true }, pricing: { model: PricingModel.MONTHLY, rate: 999 } }
+   };
 
    // بيانات النموذج لإنشاء بيئة
    const [formData, setFormData] = useState<any>({
@@ -76,6 +52,15 @@ const SuperAdminView: React.FC<SuperAdminViewProps> = ({ mode, onNavigate }) => 
       limits: { admins: 1, teachers: 5, accountants: 1, students: 200 },
       expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
    });
+
+   const applyPreset = (key: string) => {
+      setFormData((prev: any) => ({
+         ...prev,
+         limits: packagePresets[key].limits,
+         permissions: packagePresets[key].permissions,
+         pricing: { ...prev.pricing, ...packagePresets[key].pricing }
+      }));
+   };
 
    // حساب إجمالي المبلغ بناءً على الموديل
    const calculatedTotal = useMemo(() => {
@@ -318,64 +303,6 @@ const SuperAdminView: React.FC<SuperAdminViewProps> = ({ mode, onNavigate }) => 
       );
    }
 
-   // واجهة إدارة الصلاحيات (Permissions)
-   if (mode === 'permissions') {
-      return <PermissionsManager />;
-   }
-
-   // واجهة الإعدادات العامة (System Settings)
-   if (mode === 'system_settings') {
-      return (
-         <div className="space-y-12 animate-view pb-20 text-right">
-            <div className="premium-dark-card p-14 text-white overflow-hidden relative border-none shadow-3xl">
-               <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-600/10 blur-[120px] -mr-40 -mt-40 rounded-full"></div>
-               <div className="relative z-10">
-                  <h2 className="text-5xl font-black italic uppercase flex items-center gap-6">
-                     <Settings size={48} className="text-indigo-400" /> SYSTEM SETTINGS
-                  </h2>
-                  <p className="text-slate-400 font-bold mt-4 text-xl">تخصيص بيانات النظام المركزية ومعلومات الدعم الفني.</p>
-               </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-               <div className="glass-panel p-12 bg-white rounded-[3.5rem] border border-slate-100 shadow-sm space-y-10">
-                  <h3 className="text-2xl font-black text-slate-900 border-b pb-6 flex items-center gap-4"><Info size={32} className="text-indigo-600" /> معلومات الهوية</h3>
-                  <div className="space-y-8">
-                     <div className="space-y-2">
-                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest px-2">اسم المنظومة</label>
-                        <input value={systemName} onChange={e => setSystemName(e.target.value)} className="input-primary text-xl font-black p-6" />
-                     </div>
-                     <div className="space-y-2">
-                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest px-2">رابط الشعار (URL)</label>
-                        <input value={systemLogo} onChange={e => setSystemLogo?.(e.target.value)} className="input-primary text-sm font-mono p-6" />
-                     </div>
-                  </div>
-               </div>
-
-               <div className="glass-panel p-12 bg-white rounded-[3.5rem] border border-slate-100 shadow-sm space-y-10">
-                  <h3 className="text-2xl font-black text-slate-900 border-b pb-6 flex items-center gap-4"><MessageSquare size={32} className="text-emerald-600" /> قنوات الدعم الفني</h3>
-                  <div className="space-y-8">
-                     <div className="space-y-2">
-                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest px-2">بريد الدعم الفني</label>
-                        <input value={systemContact.email} onChange={e => setSystemContact({ ...systemContact, email: e.target.value })} className="input-primary text-xl font-black p-6 text-left" />
-                     </div>
-                     <div className="space-y-2">
-                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest px-2">رقم هاتف الدعم / واتساب</label>
-                        <input value={systemContact.phone} onChange={e => setSystemContact({ ...systemContact, phone: e.target.value })} className="input-primary text-xl font-black p-6 text-left" />
-                     </div>
-                  </div>
-               </div>
-            </div>
-
-            <div className="flex justify-end pt-10">
-               <button onClick={() => addNotification({ title: 'حفظ الإعدادات', content: 'تم حفظ كافة تغييرات النظام بنجاح.', type: 'success', date: new Date().toISOString() })} className="px-20 py-8 btn-primary rounded-[2.5rem] font-black text-2xl shadow-3xl flex items-center gap-4 group">
-                  <Save size={32} className="group-hover:scale-110 transition-transform" /> حفظ كافة التغييرات
-               </button>
-            </div>
-         </div>
-      );
-   }
-
    // الواجهة الرئيسية (Overview)
    return (
       <div className="space-y-12 animate-view pb-20">
@@ -405,16 +332,9 @@ const SuperAdminView: React.FC<SuperAdminViewProps> = ({ mode, onNavigate }) => 
                   <h2 className="text-4xl font-black tracking-tighter italic uppercase text-slate-900">Environments Console</h2>
                   <p className="text-slate-500 font-bold mt-2 text-lg">تخصيص الحصص التخزينية، وتفعيل ميزات الذكاء الاصطناعي لكل مؤسسة.</p>
                </div>
-               <button onClick={() => { setEditingInst(null); setShowModal(true); }} className="btn-update-premium px-16 py-8 rounded-[2.5rem] font-black text-xl flex items-center gap-6 shadow-3xl hover:scale-105 active:scale-95 transition-all">
+               <button onClick={() => onNavigate('add_institution')} className="btn-update-premium px-16 py-8 rounded-[2.5rem] font-black text-xl flex items-center gap-6 shadow-3xl hover:scale-105 active:scale-95 transition-all">
                   <Plus size={36} strokeWidth={3} /> تكوين بيئة تعليمية
                </button>
-            </div>
-
-            <div className="glass-panel p-1 rounded-[3rem] border-none shadow-xl overflow-hidden">
-               <SmartAnalytic
-                  role={UserRole.SUPER_ADMIN}
-                  dataContext={`إجمالي الإيرادات ${institutions.reduce((a, b) => a + b.pricing.paidAmount, 0).toLocaleString()} من أصل ${institutions.reduce((a, b) => a + b.pricing.totalAmount, 0).toLocaleString()}. عدد البيئات النشطة ${institutions.filter(i => i.status === 'active').length}. معدل النمو إيجابي.`}
-               />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
@@ -453,12 +373,12 @@ const SuperAdminView: React.FC<SuperAdminViewProps> = ({ mode, onNavigate }) => 
 
          {/* مودال تكوين بيئة جديدة (Pricing & Provisioning) */}
          {showModal && (
-            <div className="fixed inset-0 z-[1000] premium-modal-backdrop flex items-center justify-center p-6" onClick={() => setShowModal(false)}>
-               <div className="premium-modal-content w-full max-w-7xl animate-view flex flex-col max-h-[95vh]" onClick={e => e.stopPropagation()}>
-                  <div className="premium-modal-header flex justify-between items-center">
+            <div className="fixed inset-0 z-[1000] bg-slate-950/80 backdrop-blur-2xl flex items-center justify-center p-6">
+               <div className="glass-panel w-full max-w-7xl bg-white p-14 animate-view flex flex-col max-h-[95vh] overflow-hidden border-[15px] border-slate-50/50 shadow-3xl rounded-[5rem]">
+                  <div className="flex justify-between items-center border-b pb-10">
                      <div className="flex items-center gap-8">
                         <div className="p-6 bg-indigo-600 text-white rounded-[2rem] shadow-2xl"><Globe size={40} /></div>
-                        <h3 className="text-5xl font-black tracking-tighter italic uppercase">{editingInst ? 'تحديث البيئة' : 'نشر بيئة جديدة'}</h3>
+                        <h3 className="text-5xl font-black tracking-tighter italic uppercase">{editingInst ? 'Update Environment' : 'Deploy New Environment'}</h3>
                      </div>
                      <button onClick={() => setShowModal(false)} className="p-5 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-[2rem] transition-all"><X size={48} /></button>
                   </div>
@@ -468,6 +388,27 @@ const SuperAdminView: React.FC<SuperAdminViewProps> = ({ mode, onNavigate }) => 
                         {/* الأساسيات والحدود */}
                         <div className="space-y-12">
                            <div className="space-y-8">
+                              {/* Package Presets */}
+                              {!editingInst && (
+                                 <div className="mb-8 p-6 bg-slate-50 rounded-[2.5rem] border border-slate-100">
+                                    <h5 className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-4">اختيار باقة جاهزة (Quick Presets)</h5>
+                                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                                       <button onClick={() => applyPreset('free')} className="p-3 bg-white border border-slate-200 rounded-xl hover:border-indigo-600 hover:bg-slate-50 transition-all text-center">
+                                          <p className="font-black text-slate-900 text-xs">مجانية</p>
+                                       </button>
+                                       <button onClick={() => applyPreset('basic')} className="p-3 bg-white border border-slate-200 rounded-xl hover:border-indigo-600 hover:bg-slate-50 transition-all text-center">
+                                          <p className="font-black text-slate-900 text-xs">أساسية</p>
+                                       </button>
+                                       <button onClick={() => applyPreset('advanced')} className="p-3 bg-white border border-emerald-200 rounded-xl hover:border-emerald-600 hover:bg-emerald-50 transition-all text-center">
+                                          <p className="font-black text-emerald-900 text-xs">متقدمة</p>
+                                       </button>
+                                       <button onClick={() => applyPreset('enterprise')} className="p-3 bg-slate-900 border border-slate-900 rounded-xl hover:bg-indigo-900 transition-all text-center">
+                                          <p className="font-black text-white text-xs">مؤسسية</p>
+                                       </button>
+                                    </div>
+                                 </div>
+                              )}
+
                               <h4 className="text-sm font-black text-indigo-600 uppercase tracking-[0.3em] flex items-center gap-4 border-r-4 border-indigo-600 pr-4">1. المؤسسة والمدير</h4>
                               <div className="space-y-8">
                                  <div className="space-y-2"><label className="text-[11px] font-black text-slate-400 uppercase tracking-widest px-2">اسم الجهة التعليمية</label><input value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full p-6 bg-slate-50 border-2 border-transparent focus:border-indigo-600 rounded-3xl font-black text-xl outline-none transition-all shadow-inner" placeholder="مثال: أكاديمية النخبة" /></div>
@@ -496,13 +437,11 @@ const SuperAdminView: React.FC<SuperAdminViewProps> = ({ mode, onNavigate }) => 
                         <div className="space-y-12">
                            <div className="space-y-8">
                               <h4 className="text-sm font-black text-amber-600 uppercase tracking-[0.3em] flex items-center gap-4 border-r-4 border-amber-600 pr-4">3. تمكين الوحدات والصلاحيات (Permissions)</h4>
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                 <PermissionItem label="الذكاء الاصطناعي (Gemini)" active={formData.permissions.allowAiUsage} onClick={() => setFormData({ ...formData, permissions: { ...formData.permissions, allowAiUsage: !formData.permissions.allowAiUsage } })} icon={<BrainCircuit size={20} />} />
-                                 <PermissionItem label="المصحح الذكي (OCR)" active={formData.permissions.allowAiCorrection} onClick={() => setFormData({ ...formData, permissions: { ...formData.permissions, allowAiCorrection: !formData.permissions.allowAiCorrection } })} icon={<Camera size={20} />} />
-                                 <PermissionItem label="المحلل الذكي للأداء" active={formData.permissions.allowSmartAnalyst} onClick={() => setFormData({ ...formData, permissions: { ...formData.permissions, allowSmartAnalyst: !formData.permissions.allowSmartAnalyst } })} icon={<BarChart3 size={20} />} />
-                                 <PermissionItem label="البث المباشر والحصص" active={formData.permissions.allowLiveStreaming} onClick={() => setFormData({ ...formData, permissions: { ...formData.permissions, allowLiveStreaming: !formData.permissions.allowLiveStreaming } })} icon={<MonitorPlay size={20} />} />
-                                 <PermissionItem label="النظام المالي المحاسبي" active={formData.permissions.allowFinancialLedger} onClick={() => setFormData({ ...formData, permissions: { ...formData.permissions, allowFinancialLedger: !formData.permissions.allowFinancialLedger } })} icon={<Wallet size={20} />} />
-                                 <PermissionItem label="هوية مخصصة (Branding)" active={formData.permissions.allowCustomBranding} onClick={() => setFormData({ ...formData, permissions: { ...formData.permissions, allowCustomBranding: !formData.permissions.allowCustomBranding } })} icon={<Palette size={20} />} />
+                              <div className="grid grid-cols-1 gap-4">
+                                 <PermissionItem label="الذكاء الاصطناعي التوليدي (Gemini Integration)" active={formData.permissions.allowAiUsage} onClick={() => setFormData({ ...formData, permissions: { ...formData.permissions, allowAiUsage: !formData.permissions.allowAiUsage } })} icon={<BrainCircuit size={24} />} />
+                                 <PermissionItem label="البث المباشر والحصص التفاعلية" active={formData.permissions.allowLiveStreaming} onClick={() => setFormData({ ...formData, permissions: { ...formData.permissions, allowLiveStreaming: !formData.permissions.allowLiveStreaming } })} icon={<MonitorPlay size={24} />} />
+                                 <PermissionItem label="النظام المالي المحاسبي المطور" active={formData.permissions.allowFinancialLedger} onClick={() => setFormData({ ...formData, permissions: { ...formData.permissions, allowFinancialLedger: !formData.permissions.allowFinancialLedger } })} icon={<Wallet size={24} />} />
+                                 <PermissionItem label="هوية بصرية مخصصة (White Labeling)" active={formData.permissions.allowCustomBranding} onClick={() => setFormData({ ...formData, permissions: { ...formData.permissions, allowCustomBranding: !formData.permissions.allowCustomBranding } })} icon={<Palette size={24} />} />
                               </div>
                            </div>
 
@@ -562,6 +501,28 @@ const SuperAdminView: React.FC<SuperAdminViewProps> = ({ mode, onNavigate }) => 
    );
 };
 
+const QuotaBox = ({ label, val, highlight }: any) => (
+   <div className={`p-5 rounded-3xl border transition-all text-center ${highlight ? 'bg-indigo-600 text-white shadow-xl scale-105' : 'bg-slate-50 border-slate-100 group-hover:bg-white group-hover:shadow-inner'}`}>
+      <p className={`text-[10px] font-black uppercase tracking-[0.2em] mb-2 ${highlight ? 'text-indigo-200' : 'text-slate-400'}`}>{label}</p>
+      <p className="text-3xl font-black tabular-nums leading-none">{val}</p>
+   </div>
+);
 
+const QuotaInput = ({ label, val, onChange, highlight }: any) => (
+   <div className="space-y-3 text-right">
+      <label className="text-[11px] font-black text-slate-400 uppercase px-2 tracking-widest">{label}</label>
+      <input type="number" value={val} onChange={e => onChange?.(parseInt(e.target.value) || 0)} className={`w-full p-6 rounded-[2rem] text-center font-black text-3xl border-2 shadow-inner outline-none transition-all ${highlight ? 'border-indigo-200 bg-indigo-50 text-indigo-900 focus:border-indigo-600' : 'border-slate-100 bg-white text-slate-900 focus:border-indigo-600'}`} />
+   </div>
+);
+
+const PermissionItem = ({ label, active, onClick, icon }: any) => (
+   <button onClick={onClick} className={`p-8 rounded-[3rem] border-2 transition-all flex items-center justify-between group ${active ? 'border-indigo-200 bg-indigo-50/50 shadow-sm' : 'border-slate-100 bg-white grayscale opacity-50'}`}>
+      <div className="flex items-center gap-6">
+         <div className={`p-4 rounded-2xl transition-all ${active ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>{icon}</div>
+         <span className={`text-lg font-black ${active ? 'text-indigo-950' : 'text-slate-400'}`}>{label}</span>
+      </div>
+      <div className={`w-10 h-10 rounded-full border-4 flex items-center justify-center transition-all ${active ? 'bg-indigo-600 border-indigo-100 text-white' : 'border-slate-100 text-transparent'}`}><Check size={24} strokeWidth={4} /></div>
+   </button>
+);
 
 export default SuperAdminView;

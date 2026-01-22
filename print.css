@@ -1,0 +1,376 @@
+/* ====================================
+   ALEAQRAB PROFESSIONAL PRINT STYLES
+   ==================================== */
+
+@media print {
+
+    /* Reset & Base */
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
+
+    @page {
+        size: A4;
+        margin: 15mm 10mm;
+    }
+
+    @page :first {
+        margin-top: 20mm;
+    }
+
+    /* Hide non-printable elements */
+    .no-print,
+    nav,
+    header,
+    footer,
+    .sidebar,
+    button:not(.print-button),
+    .toast,
+    .modal-overlay,
+    [data-print="false"] {
+        display: none !important;
+    }
+
+    /* Force print visibility */
+    .print-only {
+        display: block !important;
+    }
+
+    /* Body & Layout */
+    body {
+        margin: 0;
+        padding: 0;
+        background: white !important;
+        color: black !important;
+        font-size: 12pt;
+        line-height: 1.6;
+    }
+
+    /* Typography */
+    h1 {
+        font-size: 24pt;
+        margin: 0 0 12pt;
+        page-break-after: avoid;
+    }
+
+    h2 {
+        font-size: 18pt;
+        margin: 16pt 0 8pt;
+        page-break-after: avoid;
+    }
+
+    h3 {
+        font-size: 14pt;
+        margin: 12pt 0 6pt;
+        page-break-after: avoid;
+    }
+
+    h4,
+    h5,
+    h6 {
+        font-size: 12pt;
+        margin: 8pt 0 4pt;
+        page-break-after: avoid;
+    }
+
+    p,
+    li {
+        font-size: 11pt;
+        line-height: 1.5;
+        orphans: 3;
+        widows: 3;
+    }
+
+    /* Tables */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        page-break-inside: avoid;
+        margin: 12pt 0;
+    }
+
+    thead {
+        display: table-header-group;
+        font-weight: bold;
+        background: #f0f0f0 !important;
+    }
+
+    tbody {
+        display: table-row-group;
+    }
+
+    tr {
+        page-break-inside: avoid;
+        page-break-after: auto;
+    }
+
+    th,
+    td {
+        border: 1pt solid #333;
+        padding: 6pt 8pt;
+        text-align: right;
+        font-size: 10pt;
+    }
+
+    th {
+        background: #e0e0e0 !important;
+        font-weight: bold;
+    }
+
+    /* Financial statements specific */
+    .financial-table td:nth-child(2),
+    .financial-table td:nth-child(3) {
+        text-align: left;
+        font-family: 'Courier New', monospace;
+        direction: ltr;
+    }
+
+    /* Page Breaks */
+    .page-break-before {
+        page-break-before: always;
+    }
+
+    .page-break-after {
+        page-break-after: always;
+    }
+
+    .avoid-break {
+        page-break-inside: avoid;
+    }
+
+    /* Headers & Footers */
+    .print-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2pt solid #000;
+        padding-bottom: 8pt;
+        margin-bottom: 16pt;
+    }
+
+    .print-header img {
+        max-height: 60pt;
+        width: auto;
+    }
+
+    .print-footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-size: 9pt;
+        color: #666;
+        border-top: 1pt solid #ccc;
+        padding-top: 6pt;
+    }
+
+    /* Receipts & Vouchers */
+    .receipt-container,
+    .voucher-container {
+        max-width: 180mm;
+        margin: 0 auto;
+        padding: 10mm;
+        border: 2pt solid #000;
+    }
+
+    .receipt-header {
+        text-align: center;
+        margin-bottom: 16pt;
+        border-bottom: 2pt double #000;
+        padding-bottom: 8pt;
+    }
+
+    .receipt-body {
+        margin: 16pt 0;
+        font-size: 12pt;
+        line-height: 2;
+    }
+
+    .receipt-footer {
+        margin-top: 24pt;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .signature-box {
+        width: 120pt;
+        border-top: 1pt solid #000;
+        padding-top: 6pt;
+        text-align: center;
+        font-size: 10pt;
+    }
+
+    /* Student Reports Card */
+    .report-card {
+        border: 2pt solid #000;
+        padding: 12pt;
+        margin: 8pt 0;
+    }
+
+    .report-card-header {
+        background: #f5f5f5 !important;
+        padding: 8pt;
+        margin-bottom: 12pt;
+        text-align: center;
+    }
+
+    .grade-table {
+        width: 100%;
+        margin: 12pt 0;
+    }
+
+    .grade-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 6pt 0;
+        border-bottom: 1pt dotted #ccc;
+    }
+
+    /* Barcodes & QR */
+    .barcode-container,
+    .qr-container {
+        text-align: center;
+        page-break-inside: avoid;
+        margin: 12pt 0;
+    }
+
+    svg {
+        max-width: 100%;
+        height: auto;
+    }
+
+    /* Charts (convert to static) */
+    canvas {
+        max-width: 100% !important;
+        page-break-inside: avoid;
+    }
+
+    /* Utility Classes */
+    .print-center {
+        text-align: center;
+    }
+
+    .print-right {
+        text-align: right;
+    }
+
+    .print-left {
+        text-align: left;
+    }
+
+    .print-bold {
+        font-weight: bold;
+    }
+
+    .print-large {
+        font-size: 14pt;
+    }
+
+    .print-small {
+        font-size: 9pt;
+    }
+
+    .print-mono {
+        font-family: 'Courier New', monospace;
+    }
+
+    /* RTL Support */
+    [dir="rtl"] {
+        direction: rtl;
+        text-align: right;
+    }
+
+    [dir="rtl"] table {
+        direction: rtl;
+    }
+
+    [dir="rtl"] .receipt-footer {
+        direction: rtl;
+    }
+
+    /* A5 Size Override - Use via body.page-a5 */
+    .page-a5 {
+        /* Apply via: document.body.classList.add('page-a5') */
+    }
+
+    @page a5-format {
+        size: A5;
+        margin: 10mm;
+    }
+
+    /* Letter Size Override */
+    @page letter-format {
+        size: letter;
+        margin: 0.5in;
+    }
+
+    /* Landscape */
+    @page landscape-format {
+        size: A4 landscape;
+        margin: 10mm 15mm;
+    }
+
+    /* Remove shadows, transitions */
+    * {
+        box-shadow: none !important;
+        text-shadow: none !important;
+        transition: none !important;
+        animation: none !important;
+    }
+
+    /* Links */
+    a {
+        color: #000;
+        text-decoration: underline;
+    }
+
+    a[href]:after {
+        content: " (" attr(href) ")";
+        font-size: 9pt;
+        color: #666;
+    }
+
+    /* Images */
+    img {
+        max-width: 100% !important;
+        page-break-inside: avoid;
+    }
+
+    /* Watermark support */
+    .watermark {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) rotate(-45deg);
+        font-size: 72pt;
+        opacity: 0.1;
+        font-weight: bold;
+        z-index: -1;
+        pointer-events: none;
+    }
+}
+
+/* Screen-only Print Button */
+@media screen {
+    .print-button {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 9999;
+        padding: 12px 24px;
+        background: #4F46E5;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: bold;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .print-button:hover {
+        background: #4338CA;
+    }
+}

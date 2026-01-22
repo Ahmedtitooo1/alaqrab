@@ -62,6 +62,7 @@ const AssignmentsModule: React.FC = () => {
             studentId: 's1',
             studentName: isRtl ? 'أحمد محمد' : 'Ahmed Mohamed',
             submissionDate: '2024-03-18',
+            submittedAt: '2024-03-18T10:30:00Z',
             status: 'pending',
             files: [{ url: 'https://via.placeholder.com/600x800?text=Student+Work', type: 'image' }]
         }

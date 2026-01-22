@@ -1,23 +1,19 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <link rel="icon" type="image/png" href="/logo.png">
     <title>AleaQrab - منظومة العقرب التعليمية</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-body: #f0f4f8;
-            --text-main: #0f172a;
-            --primary-indigo: #4169E1;
-            /* Royal Blue */
-            --primary-royal: #4169E1;
-            --glass: rgba(255, 255, 255, 0.65);
-            --border-glass: rgba(255, 255, 255, 0.5);
-            --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            --bg-body: #f1f5f9; 
+            --text-main: #020617; 
+            --primary-indigo: #3872ca; 
+            --glass: rgba(255, 255, 255, 0.7);
+            --border-glass: rgba(255, 255, 255, 0.4);
         }
 
         * {
@@ -54,19 +50,13 @@
         }
 
         .premium-dark-card {
-            background: #020617;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: #00f7ffa1;
+            border: 1px solid rgba(141, 251, 255, 0.363);
             border-radius: 2.5rem;
         }
 
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
         /* --- تحسينات الطباعة الاحترافية --- */
         @media print {
@@ -74,167 +64,53 @@
                 size: A4;
                 margin: 1cm;
             }
-
             body {
                 background: white !important;
                 color: black !important;
             }
-
-            .no-print,
-            aside,
-            header,
-            nav,
-            button,
+            .no-print, 
+            aside, 
+            header, 
+            nav, 
+            button, 
             .btn-update-premium,
             input[type="checkbox"],
             .fixed {
                 display: none !important;
             }
-
             main {
                 padding: 0 !important;
                 margin: 0 !important;
                 width: 100% !important;
                 position: static !important;
             }
-
             .print-block {
                 display: block !important;
                 visibility: visible !important;
             }
-
-            .glass-panel,
-            .glass-card {
+            .glass-panel, .glass-card {
                 box-shadow: none !important;
                 border: 1px solid #ddd !important;
                 background: white !important;
                 backdrop-filter: none !important;
             }
-
             table {
                 width: 100% !important;
                 border-collapse: collapse !important;
             }
-
-            th,
-            td {
+            th, td {
                 border: 1px solid #333 !important;
                 padding: 8px !important;
                 color: black !important;
             }
-
             /* إظهار الصور الخلفية والألوان في الطباعة */
             * {
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
             }
         }
-
-        @media print {
-            @page {
-                size: A4;
-                margin: 15mm 10mm;
-            }
-
-            * {
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-            }
-
-            body {
-                margin: 0;
-                padding: 0;
-                background: white !important;
-            }
-
-            .no-print {
-                display: none !important;
-            }
-
-            .print\:block {
-                display: block !important;
-            }
-
-            /* تحسين الجداول للطباعة */
-            table {
-                page-break-inside: auto;
-                border-collapse: collapse !important;
-            }
-
-            tr {
-                page-break-inside: avoid;
-                page-break-after: auto;
-            }
-
-            thead {
-                display: table-header-group;
-            }
-
-            tfoot {
-                display: table-footer-group;
-            }
-
-            /* منع قطع العناصر */
-            h1,
-            h2,
-            h3,
-            h4,
-            h5,
-            h6 {
-                page-break-after: avoid;
-                page-break-inside: avoid;
-            }
-
-            img {
-                page-break-inside: avoid;
-                max-width: 100% !important;
-            }
-
-            /* تحسين الألوان والحدود */
-            .border,
-            .border-2,
-            .border-4 {
-                border-color: #000 !important;
-            }
-
-            .bg-indigo-950 {
-                background-color: #1e1b4b !important;
-                color: white !important;
-            }
-
-            .text-indigo-950 {
-                color: #1e1b4b !important;
-            }
-
-            /* تحسين الظلال للطباعة */
-            .shadow-xl,
-            .shadow-2xl,
-            .shadow-3xl {
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
-            }
-        }
-
-        /* دعم أحجام ورق إضافية */
-        @media print and (width: 8.5in) and (height: 11in) {
-
-            /* Letter Size */
-            @page {
-                size: letter;
-                margin: 0.5in;
-            }
-        }
-
-        @media print and (width: 8.5in) and (height: 14in) {
-
-            /* Legal Size */
-            @page {
-                size: legal;
-                margin: 0.5in;
-            }
-        }
     </style>
-    <script type="importmap">
+<script type="importmap">
 {
   "imports": {
     "@google/genai": "https://esm.sh/@google/genai@^1.34.0",
@@ -248,12 +124,11 @@
   }
 }
 </script>
-    <link rel="stylesheet" href="/index.css">
+<link rel="stylesheet" href="/index.css">
+<link rel="stylesheet" href="/print.css" media="print">
 </head>
-
 <body>
     <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
+<script type="module" src="/index.tsx"></script>
 </body>
-
 </html>

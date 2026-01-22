@@ -17,7 +17,7 @@ export const MarketplaceModule: React.FC = () => {
     const filteredItems = useMemo(() => {
         return marketplaceItems.filter(item => {
             const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                item.teacherName.toLowerCase().includes(searchQuery.toLowerCase());
+                (item.teacherName?.toLowerCase() || '').includes(searchQuery.toLowerCase());
             const matchesCategory = activeCategory === 'all' || item.type === activeCategory;
             return matchesSearch && matchesCategory;
         });
@@ -85,7 +85,7 @@ export const MarketplaceModule: React.FC = () => {
                     <div key={item.id} className="group glass-panel bg-white rounded-[3.5rem] border border-slate-100 shadow-sm overflow-hidden hover:shadow-2xl hover:-translate-y-2 transition-all duration-500">
                         <div className="relative h-64 overflow-hidden">
                             <img
-                                src={item.thumbnail || `https://source.unsplash.com/featured/?education,${item.type}`}
+                                src={item.thumbnail || `https://api.dicebear.com/7.x/shapes/svg?seed=${item.type || 'edu'}`}
                                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                                 alt={item.title}
                             />
@@ -105,17 +105,17 @@ export const MarketplaceModule: React.FC = () => {
                         <div className="p-10 space-y-6">
                             <div className="space-y-2">
                                 <h3 className="text-2xl font-black text-slate-900 group-hover:text-amber-600 transition-colors">{item.title}</h3>
-                                <p className="text-slate-400 font-bold text-sm">بواسطة: {item.teacherName}</p>
+                                <p className="text-slate-400 font-bold text-sm">بواسطة: {item.teacherName || 'معلم معتمد'}</p>
                             </div>
 
                             <p className="text-slate-500 text-sm line-clamp-2 leading-relaxed">{item.description}</p>
 
                             <div className="flex items-center justify-between pt-6 border-t border-slate-50">
                                 <div className="flex items-center gap-2 text-slate-400 font-black text-[10px]">
-                                    <Users size={14} /> {item.salesCount} طالب مشترك
+                                    <Users size={14} /> {item.salesCount || 0} طالب مشترك
                                 </div>
                                 <button
-                                    onClick={() => purchaseMarketplaceItem(item.id, user?.id || '')}
+                                    onClick={() => purchaseMarketplaceItem(item.id)}
                                     className="px-8 py-3 bg-slate-100 text-slate-900 rounded-xl font-black text-xs hover:bg-slate-950 hover:text-white transition-all shadow-sm"
                                 >
                                     شراء الآن

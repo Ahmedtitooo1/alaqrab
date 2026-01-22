@@ -1,15 +1,79 @@
-
-import * as React from 'react';
-import { useState, useEffect } from 'react';
-import { UserRole } from './types';
-import LandingPage from './components/LandingPage';
-import DashboardLayout from './components/DashboardLayout';
-
+import React, { useEffect, useState } from 'react';
+import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAppContext } from './context/AppContext';
+import DashboardLayout from './components/DashboardLayout';
+import LandingPage from './components/LandingPage';
+import { LoginPage } from './src/pages/Auth/LoginPage';
+import { mockAuthService } from './src/services/mockAuth';
+import ExamRoom from './src/pages/Student/ExamRoom';
+import WalkIn from './src/pages/Secretary/WalkIn';
+import AITutorPage from './src/pages/AITutorPage';
+
+// Session Restorer
+const SessionRestorer = ({ children }: { children: any }) => {
+  const { setUser, setSystemName, setCurrentTenant } = useAppContext();
+  const [checked, setChecked] = useState(false);
+
+  useEffect(() => {
+    const session = mockAuthService.getCurrentSession();
+    if (session) {
+      setUser(session.user);
+      setSystemName(session.tenant.name);
+      setCurrentTenant(session.tenant);
+    }
+    setChecked(true);
+  }, []);
+
+  if (!checked) return <div className="min-h-screen bg-slate-50 flex items-center justify-center text-slate-400">Loading Session...</div>;
+  return children;
+};
+
+// Protected Route Wrapper
+const ProtectedRoute = ({ children }: { children: any }) => {
+  const { user } = useAppContext();
+  const location = useLocation();
+
+  if (!user) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+  return children;
+};
+
+const AppRoutes = () => {
+  const { user } = useAppContext();
+  const navigate = useNavigate();
+
+  return (
+    <Routes>
+      {/* Public Landing Page for Tenants - Now supports Demo Mode */}
+      <Route path="/:tenant_slug" element={<LandingPage onStart={() => navigate('/dashboard')} />} />
+
+      {/* Auth */}
+      <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <LoginPage />} />
+
+      {/* Main Application */}
+      <Route path="/dashboard/*" element={
+        <ProtectedRoute>
+          <DashboardLayout role={user?.role!} onLogout={() => {
+            mockAuthService.logout();
+            navigate('/login');
+          }} onRoleSwitch={() => { }} />
+        </ProtectedRoute>
+      } />
+
+      {/* Special Fullscreen Routes */}
+      <Route path="/student/exam-room" element={<ProtectedRoute><ExamRoom /></ProtectedRoute>} />
+      <Route path="/secretary/walk-in" element={<ProtectedRoute><WalkIn /></ProtectedRoute>} />
+      <Route path="/ai-tutor" element={<ProtectedRoute><AITutorPage /></ProtectedRoute>} />
+
+
+      {/* Default - Show Landing Page for Demo */}
+      <Route path="/" element={<LandingPage onStart={() => navigate('/dashboard')} />} />
+    </Routes>
+  );
+};
 
 const App: React.FC = () => {
-  const [role, setRole] = useState<UserRole>(UserRole.GUEST);
-  const [isLoading, setIsLoading] = useState(true);
   const { systemLogo } = useAppContext();
 
   useEffect(() => {
@@ -21,48 +85,10 @@ const App: React.FC = () => {
     document.getElementsByTagName('head')[0].appendChild(link);
   }, [systemLogo]);
 
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 2000);
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (isLoading) {
-    return (
-      <div className="h-screen w-screen flex items-center justify-center bg-[#f1f5f9] text-slate-900 overflow-hidden relative">
-        {/* Background Elements */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-500/10 rounded-full blur-3xl animate-pulse"></div>
-
-        <div className="flex flex-col items-center relative z-10 p-10 glass-card">
-          <div className="relative mb-8">
-            <div className="absolute inset-0 bg-indigo-600/20 blur-2xl rounded-full scale-110 animate-pulse"></div>
-            <img
-              src={systemLogo}
-              className="w-32 h-32 object-contain relative z-10 animate-bounce"
-              alt="AleaQrab"
-            />
-          </div>
-          <div className="flex flex-col items-center gap-3">
-            <h1 className="font-black text-4xl tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-slate-800 uppercase">ALEAQRAB</h1>
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-indigo-600 animate-ping"></span>
-              <p className="text-slate-400 font-bold text-xs tracking-[0.2em] uppercase">Initializing System...</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (role === UserRole.GUEST) {
-    return <LandingPage onStart={(selectedRole) => setRole(selectedRole)} />;
-  }
-
   return (
-    <DashboardLayout
-      role={role}
-      onLogout={() => setRole(UserRole.GUEST)}
-      onRoleSwitch={(newRole) => setRole(newRole)}
-    />
+    <SessionRestorer>
+      <AppRoutes />
+    </SessionRestorer>
   );
 };
 

@@ -85,12 +85,12 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ currentUserRole }) => {
           <h2 className="text-xl font-black mb-4">{t('messages')}</h2>
           <div className="relative">
             <Search className={`absolute ${isRtl ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 text-gray-400`} size={18} />
-            <input
-              type="text"
+            <input 
+              type="text" 
               placeholder={t('search_placeholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-2xl py-3 px-10 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500/20"
+              className="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-2xl py-3 px-10 text-xs font-bold outline-none focus:ring-2 focus:ring-amber-500/20"
             />
           </div>
         </div>
@@ -100,11 +100,11 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ currentUserRole }) => {
             <button
               key={contact.id}
               onClick={() => setSelectedContact(contact)}
-              className={`w-full flex items-center gap-4 p-4 rounded-[2rem] transition-all mb-1 ${selectedContact?.id === contact.id ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : 'hover:bg-gray-50 dark:hover:bg-slate-800'}`}
+              className={`w-full flex items-center gap-4 p-4 rounded-[2rem] transition-all mb-1 ${selectedContact?.id === contact.id ? 'bg-amber-500 text-slate-900' : 'hover:bg-gray-50 dark:hover:bg-slate-800'}`}
             >
               <div className="relative">
-                <img
-                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${contact.avatar}`}
+                <img 
+                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${contact.avatar}`} 
                   className="w-12 h-12 rounded-2xl bg-white/20 p-1"
                   alt="avatar"
                 />
@@ -115,12 +115,12 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ currentUserRole }) => {
               <div className="flex-1 text-right">
                 <div className="flex justify-between items-center mb-1">
                   <h4 className="font-black text-sm">{contact.name}</h4>
-                  <span className={`text-[9px] font-bold ${selectedContact?.id === contact.id ? 'text-indigo-200' : 'text-gray-400'}`}>{contact.time}</span>
+                  <span className={`text-[9px] font-bold ${selectedContact?.id === contact.id ? 'text-slate-800' : 'text-gray-400'}`}>{contact.time}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <p className={`text-xs truncate max-w-[150px] ${selectedContact?.id === contact.id ? 'text-indigo-100' : 'text-gray-500'}`}>{contact.lastMessage}</p>
+                  <p className={`text-xs truncate max-w-[150px] ${selectedContact?.id === contact.id ? 'text-slate-800' : 'text-gray-500'}`}>{contact.lastMessage}</p>
                   {contact.unread && (
-                    <span className="bg-rose-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full">{contact.unread}</span>
+                    <span className="bg-red-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full">{contact.unread}</span>
                   )}
                 </div>
               </div>
@@ -139,9 +139,9 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ currentUserRole }) => {
                 <button className="md:hidden" onClick={() => setSelectedContact(null)}>
                   <MoreVertical className={isRtl ? 'rotate-180' : ''} />
                 </button>
-                <img
-                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${selectedContact.avatar}`}
-                  className="w-12 h-12 rounded-2xl bg-indigo-50 p-1"
+                <img 
+                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${selectedContact.avatar}`} 
+                  className="w-12 h-12 rounded-2xl bg-amber-500/10 p-1"
                   alt="avatar"
                 />
                 <div>
@@ -150,8 +150,8 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ currentUserRole }) => {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <button className="p-3 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-2xl transition-all"><Phone size={20} className="text-gray-500 hover:text-indigo-600" /></button>
-                <button className="p-3 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-2xl transition-all"><Video size={20} className="text-gray-500 hover:text-indigo-600" /></button>
+                <button className="p-3 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-2xl transition-all"><Phone size={20} className="text-gray-500" /></button>
+                <button className="p-3 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-2xl transition-all"><Video size={20} className="text-gray-500" /></button>
                 <button className="p-3 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-2xl transition-all"><MoreVertical size={20} className="text-gray-500" /></button>
               </div>
             </div>
@@ -161,12 +161,12 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ currentUserRole }) => {
               {messages.map((msg) => (
                 <div key={msg.id} className={`flex ${msg.isMe ? 'justify-end' : 'justify-start'}`}>
                   <div className={`max-w-[70%] group ${msg.isMe ? 'items-end' : 'items-start'} flex flex-col`}>
-                    <div className={`p-4 rounded-[2rem] text-sm shadow-sm ${msg.isMe ? 'bg-indigo-600 text-white rounded-br-none shadow-indigo-200' : 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-bl-none'}`}>
+                    <div className={`p-4 rounded-[2rem] text-sm shadow-sm ${msg.isMe ? 'bg-amber-500 text-slate-900 rounded-br-none' : 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-bl-none'}`}>
                       {msg.text}
                     </div>
                     <div className="flex items-center gap-2 mt-1 px-2">
                       <span className="text-[9px] font-bold text-gray-400 uppercase">{msg.time}</span>
-                      {msg.isMe && <CheckCheck size={12} className="text-indigo-500" />}
+                      {msg.isMe && <CheckCheck size={12} className="text-blue-500" />}
                     </div>
                   </div>
                 </div>
@@ -177,20 +177,20 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ currentUserRole }) => {
             {/* Input Area */}
             <div className="p-6 border-t dark:border-slate-800">
               <div className="flex items-center gap-3 bg-slate-100 dark:bg-slate-800 p-2 rounded-[2rem]">
-                <button className="p-3 text-gray-400 hover:text-indigo-600 transition-colors"><Smile size={24} /></button>
-                <button className="p-3 text-gray-400 hover:text-indigo-600 transition-colors"><Paperclip size={24} /></button>
-                <input
-                  type="text"
+                <button className="p-3 text-gray-400 hover:text-amber-500 transition-colors"><Smile size={24} /></button>
+                <button className="p-3 text-gray-400 hover:text-amber-500 transition-colors"><Paperclip size={24} /></button>
+                <input 
+                  type="text" 
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
                   placeholder={t('type_message')}
                   className="flex-1 bg-transparent border-none outline-none text-sm font-medium py-2 px-2"
                 />
-                <button
+                <button 
                   onClick={handleSendMessage}
                   disabled={!messageText.trim()}
-                  className="p-4 bg-indigo-600 text-white rounded-full shadow-lg hover:scale-105 transition-all disabled:opacity-50"
+                  className="p-4 bg-amber-500 text-slate-900 rounded-full shadow-lg hover:scale-105 transition-all disabled:opacity-50"
                 >
                   <Send size={20} className={isRtl ? 'rotate-180' : ''} />
                 </button>
@@ -199,10 +199,10 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ currentUserRole }) => {
           </>
         ) : (
           <div className="text-center">
-            <div className="w-24 h-24 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl animate-pulse">
+            <div className="w-24 h-24 bg-amber-500/10 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-6">
               <Send size={48} className={isRtl ? 'rotate-180' : ''} />
             </div>
-            <h3 className="text-2xl font-black mb-2 text-slate-900">{t('messages')}</h3>
+            <h3 className="text-2xl font-black mb-2">{t('messages')}</h3>
             <p className="text-gray-500 font-bold">{isRtl ? 'اختر جهة اتصال لبدء المحادثة' : 'Select a contact to start chatting'}</p>
           </div>
         )}

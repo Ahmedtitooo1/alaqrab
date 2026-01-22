@@ -19,6 +19,8 @@ export const LearningPathModule: React.FC = () => {
         title: 'أساسيات الفيزياء المتقدمة',
         studentId: user?.id || 'u1',
         progress: 35,
+        description: 'مسار تعليمي شامل يغطي أساسيات الفيزياء وتطبيقاتها.',
+        modules: [{ id: 'm1', title: 'Mod 1', isCompleted: true }],
         steps: [
             { id: 's1', title: 'مقدمة في الميكانيكا الكلاسيكية', type: 'video', targetId: 'v1', isCompleted: true },
             { id: 's2', title: 'اختبار تجريبي: قوانين نيوتن', type: 'quiz', targetId: 'q1', isCompleted: true },

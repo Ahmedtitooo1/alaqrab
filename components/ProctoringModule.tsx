@@ -14,8 +14,8 @@ export const ProctoringModule: React.FC = () => {
 
     // Mock logs if empty
     const mockLogs: ProctoringLog[] = [
-        { id: 'l1', studentId: 'u4', examId: 'ex1', timestamp: new Date().toISOString(), event: 'tab_switch' },
-        { id: 'l2', studentId: 'u4', examId: 'ex1', timestamp: new Date(Date.now() - 60000).toISOString(), event: 'minimized' },
+        { id: 'l1', studentId: 'u4', examId: 'ex1', timestamp: new Date().toISOString(), action: 'tab_switch', severity: 'medium' },
+        { id: 'l2', studentId: 'u4', examId: 'ex1', timestamp: new Date(Date.now() - 60000).toISOString(), action: 'minimized', severity: 'low' },
     ];
 
     const logs = proctoringLogs.length > 0 ? proctoringLogs : mockLogs;
@@ -59,7 +59,7 @@ export const ProctoringModule: React.FC = () => {
                             <div key={log.id} className="p-6 bg-rose-50/30 border border-rose-100 rounded-3xl flex flex-col md:flex-row items-center justify-between gap-6 hover:bg-rose-50 transition-all group">
                                 <div className="flex items-center gap-6">
                                     <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-rose-500 shadow-sm border border-rose-100">
-                                        {log.event === 'tab_switch' ? <ArrowRightLeft size={24} /> : <MonitorX size={24} />}
+                                        {log.action === 'tab_switch' ? <ArrowRightLeft size={24} /> : <MonitorX size={24} />}
                                     </div>
                                     <div>
                                         <div className="flex items-center gap-3">
@@ -67,7 +67,7 @@ export const ProctoringModule: React.FC = () => {
                                             <span className="text-[10px] font-black uppercase bg-slate-900 text-white px-3 py-1 rounded-lg italic">{t('suspected')}</span>
                                         </div>
                                         <p className="text-xs text-rose-600 font-bold mt-1 uppercase tracking-widest flex items-center gap-2">
-                                            <AlertTriangle size={12} /> {log.event === 'tab_switch' ? 'تبديل نافذة المتصفح' : 'تصغير المتصفح'}
+                                            <AlertTriangle size={12} /> {log.action === 'tab_switch' ? 'تبديل نافذة المتصفح' : 'تصغير المتصفح'}
                                         </p>
                                     </div>
                                 </div>

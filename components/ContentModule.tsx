@@ -6,7 +6,7 @@ import {
    Database, PlusCircle, Paperclip
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
-import { Announcement, AnnouncementType, AnnouncementStatus } from '../types';
+import { Announcement, AnnouncementType, AnnouncementStatus, UserRole } from '../types';
 
 interface ContentModuleProps {
    mode: 'events' | 'content';
@@ -42,14 +42,15 @@ const ContentModule: React.FC<ContentModuleProps> = ({ mode }) => {
          title: formData.title,
          content: formData.content,
          type: mode === 'events' ? AnnouncementType.EVENT : AnnouncementType.ANNOUNCEMENT,
-         status: AnnouncementStatus.PENDING,
+         status: AnnouncementStatus.APPROVED,
          date: formData.publishDate,
          eventDate: formData.eventDate,
          authorId: user?.id || 'u3',
          authorName: `${user?.firstName} ${user?.lastName}`,
-         authorRole: user?.role || 'teacher',
+         authorRole: user?.role || UserRole.TEACHER,
          mediaType: formData.mediaType,
-         mediaUrl: formData.mediaUrl
+         mediaUrl: formData.mediaUrl,
+         institutionId: user?.institutionId || 'tenant-1'
       };
       addAnnouncement(newAnn);
       addNotification({ title: 'تم التحديث', content: 'تم حفظ المحتوى وجدولته بنجاح.', type: 'success', date: new Date().toISOString() });
@@ -98,8 +99,8 @@ const ContentModule: React.FC<ContentModuleProps> = ({ mode }) => {
          </div>
 
          {showAddModal && (
-            <div className="fixed inset-0 z-[700] bg-slate-950/80 backdrop-blur-xl flex items-center justify-center p-6 no-print" onClick={() => setShowAddModal(false)}>
-               <div className="glass-panel w-full max-w-2xl p-12 bg-white animate-view space-y-10 max-h-[90vh] overflow-y-auto no-scrollbar rounded-[3.5rem] shadow-3xl" onClick={e => e.stopPropagation()}>
+            <div className="fixed inset-0 z-[700] bg-slate-950/80 backdrop-blur-xl flex items-center justify-center p-6 no-print">
+               <div className="glass-panel w-full max-w-2xl p-12 bg-white animate-view space-y-10 max-h-[90vh] overflow-y-auto no-scrollbar rounded-[3.5rem] shadow-3xl">
                   <div className="flex justify-between items-center border-b pb-6"><h3 className="text-3xl font-black text-slate-900 flex items-center gap-4"><PlusCircle className="text-indigo-600" /> إدراج {mode === 'events' ? 'فعالية' : 'محتوى'} جديد</h3><button onClick={() => setShowAddModal(false)}><X size={32} /></button></div>
                   <div className="space-y-6">
                      <div className="grid grid-cols-2 gap-4">

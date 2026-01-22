@@ -1,6 +1,7 @@
-import './index.css';
+
 import * as React from 'react';
 import { createRoot } from 'react-dom/client';
+import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import { AppProvider } from './context/AppContext';
 
@@ -12,8 +13,10 @@ if (!rootElement) {
 const root = createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <AppProvider>
-      <App />
-    </AppProvider>
+    <BrowserRouter>
+      <AppProvider>
+        <App />
+      </AppProvider>
+    </BrowserRouter>
   </React.StrictMode>
 );
