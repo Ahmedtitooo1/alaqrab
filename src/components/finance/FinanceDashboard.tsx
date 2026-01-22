@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { FinanceTransaction, FinanceConfig } from '../../types';
+import { FinanceTransaction, FinanceConfig } from '../../../types';
 import { getTransactions, addTransaction, getFinanceConfig } from '../../services/mockFinance';
 import FinanceSettings from './FinanceSettings';
 import { Plus, Printer, Download, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';

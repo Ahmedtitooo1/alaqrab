@@ -24,7 +24,7 @@ import SuperAdminView from './views/SuperAdminView';
 import AccountantView from './views/AccountantView';
 import AdminView from './views/AdminView';
 import FinanceDashboard from '../src/components/finance/FinanceDashboard';
-// import AccountantModule from './AccountantModule'; // Removed
+import AccountantModule from './AccountantModule';
 import ManagementModule from './ManagementModule';
 import ChatSystem from './ChatSystem';
 import InternalTicketSystem from './InternalTicketSystem';
@@ -114,7 +114,8 @@ const DashboardLayout: React.FC<{ role: UserRole; onLogout: () => void; onRoleSw
     if (role === UserRole.ACCOUNTANT) {
       if (activeTab === 'overview') return <AccountantView onNavigate={setActiveTab} />;
       if (activeTab === 'finance_dashboard') return <FinanceDashboard />;
-      return <FinanceDashboard />; // Default catch-all for accountant modules now
+      if (activeTab === 'acc_coa') return <ChartOfAccounts />;
+      return <AccountantModule mode={activeTab} onNavigate={setActiveTab} />;
     }
 
     if (role === UserRole.SECRETARY) {
@@ -215,6 +216,28 @@ const DashboardLayout: React.FC<{ role: UserRole; onLogout: () => void; onRoleSw
           {role === UserRole.ACCOUNTANT && (
             <>
               <MenuItem id="finance_dashboard" icon={Calculator} labelKey="اللوحة المالية (الحسابات)" />
+
+              <MenuItem
+                labelKey="إدارية" icon={Building} menuKey="acc_admin"
+                submenu={[
+                  { id: 'acc_coa', labelKey: 'شجرة الحسابات' },
+                  !isTutorMode && { id: 'acc_employees', labelKey: 'إدارة الموظفين' },
+                  { id: 'acc_clients', labelKey: 'العملاء والطلاب' },
+                  { id: 'acc_suppliers', labelKey: 'إدارة الموردين' },
+                  !isTutorMode && { id: 'acc_inventory', labelKey: 'إدارة المخازن' }
+                ].filter(Boolean)}
+              />
+              <MenuItem
+                labelKey="قيود محاسبية" icon={FileSpreadsheet} menuKey="acc_entries"
+                submenu={[
+                  { id: 'acc_entries_list', labelKey: 'دفتر القيود' },
+                  { id: 'acc_vouchers', labelKey: 'سندات (صرف وقبض)' },
+                  { id: 'acc_journal', labelKey: 'اليومية العامة' }
+                ]}
+              />
+              {!isTutorMode && <MenuItem id="acc_payroll" icon={CreditCard} labelKey="كشوف الرواتب والالتزامات" />}
+              <MenuItem id="acc_reports" icon={BarChart3} labelKey="التقارير المحاسبية" />
+              <MenuItem id="acc_liquidity" icon={Wallet} labelKey="السيولة المالية" />
               <MenuItem id="internal_tickets" icon={AlertCircle} labelKey="الدعم والتذاكر" />
             </>
           )}
