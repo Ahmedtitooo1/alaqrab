@@ -1,3 +1,4 @@
+
 import { User, UserRole, Institution, ClientType, PricingModel } from '../../types';
 import { mockDb } from './mockDb';
 
@@ -53,28 +54,51 @@ export const mockAuthService = {
             setTimeout(() => {
                 const newTenantId = `tenant-${Date.now()}`;
 
-                // Set limits based on type
-                let limits = { admins: 1, teachers: 1, accountants: 0, students: 50 };
-                let permissions = {
-                    allowCustomBranding: false,
-                    allowAiCorrection: false,
-                    allowSmartAnalyst: false,
+                // Initialize Permissions (Legacy) & Features (New) based on Type
+                const isTutor = data.tenantType === 'tutor';
+                const isSchool = data.tenantType === 'school';
+                const isCenter = data.tenantType === 'center';
+
+                const features = {
+                    hasAccounting: isCenter || isSchool,
+                    hasBranding: isCenter || isSchool, // Tutors use default branding
+                    hasSecretary: isCenter || isSchool, // Tutors don't have reception
+                    hasAI: true, // Everyone gets basic AI
+                    hasApiAccess: isSchool, // Only Schools get API
+
+                    // Legacy Mapping
+                    allowCustomBranding: isCenter || isSchool,
+                    allowAiCorrection: isSchool,
+                    allowSmartAnalyst: isSchool || isCenter,
                     allowAiUsage: true,
-                    allowFinancialLedger: false,
-                    allowLiveStreaming: false
+                    allowFinancialLedger: isCenter || isSchool,
+                    allowLiveStreaming: true
                 };
 
-                if (data.tenantType === 'center') {
-                    limits = { admins: 3, teachers: 10, accountants: 2, students: 500 };
-                    permissions.allowFinancialLedger = true;
-                    permissions.allowCustomBranding = true;
-                } else if (data.tenantType === 'school') {
-                    limits = { admins: 10, teachers: 50, accountants: 5, students: 2000 };
-                    permissions.allowFinancialLedger = true;
-                    permissions.allowCustomBranding = true;
-                    permissions.allowAiCorrection = true;
-                    permissions.allowSmartAnalyst = true;
-                }
+                const quotas = {
+                    maxStudents: isTutor ? 50 : (isCenter ? 500 : 2000),
+                    maxTeachers: isTutor ? 1 : (isCenter ? 10 : 50),
+                    maxStorageGB: isTutor ? 5 : (isCenter ? 50 : 200),
+
+                    // Legacy Mapping
+                    admins: isTutor ? 1 : (isCenter ? 3 : 10),
+                    teachers: isTutor ? 1 : (isCenter ? 10 : 50),
+                    accountants: isTutor ? 0 : (isCenter ? 2 : 5),
+                    students: isTutor ? 50 : (isCenter ? 500 : 2000),
+                };
+
+                const subscription = {
+                    plan: isTutor ? 'FREE' : (isCenter ? 'SILVER' : 'GOLD') as any, // Simple Mapping
+                    status: 'ACTIVE' as any,
+                    startDate: new Date().toISOString().split('T')[0],
+                    endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 Days Trial
+
+                    // Legacy
+                    model: PricingModel.MONTHLY,
+                    totalAmount: 0,
+                    paidAmount: 0,
+                    revenue: 0
+                };
 
                 const newTenant: Institution = {
                     id: newTenantId,
@@ -82,10 +106,19 @@ export const mockAuthService = {
                     type: data.tenantType === 'tutor' ? ClientType.INDIVIDUAL : (data.tenantType === 'school' ? ClientType.SCHOOL : ClientType.INSTITUTION),
                     subdomain: data.organizationName.toLowerCase().replace(/\s+/g, '-'),
                     status: 'active',
-                    expiryDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                    permissions,
-                    limits,
-                    pricing: { model: PricingModel.MONTHLY, totalAmount: 0, paidAmount: 0, revenue: 0 },
+                    expiryDate: subscription.endDate,
+
+                    // Governance Fields
+                    features,
+                    quotas,
+                    subscription,
+                    settings: { apiKey: isSchool ? `sk_live_${Date.now()}` : undefined },
+
+                    // Legacy (To be kept for compatibility)
+                    permissions: features,
+                    limits: quotas,
+                    pricing: subscription,
+
                     paymentHistory: [],
                     currencies: [{ code: 'EGP', name: 'Egyptian Pound', symbol: 'EGP', exchangeRate: 1, isBase: true }]
                 } as any;
@@ -152,7 +185,10 @@ export const mockAuthService = {
         const tenant = mockDb.tenants.find(t => t.id === user.institutionId);
         if (!tenant) return false;
 
-        // Tenant Restrictions (Tutor Mode hides ERP)
+        // NEW: Check Governance Features First
+        if (module === 'financial' && !tenant.features.hasAccounting) return false;
+
+        // Tenant Restrictions (Legacy Fallback)
         if (tenant.type === 'individual' && (module === 'financial' || module === 'inventory' || module === 'hr')) {
             return false;
         }

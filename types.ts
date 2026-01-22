@@ -74,7 +74,6 @@ export interface User {
   // Academic Structure Extras
   academicYearId?: string;
   gradeLevelId?: string;
-  enrolledSubjectIds?: string[];
 }
 
 export interface PaymentLog {
@@ -87,29 +86,59 @@ export interface PaymentLog {
 export interface Institution {
   id: string;
   name: string;
-  type: ClientType;
+  type: ClientType; // 'institution' | 'individual' | 'school'
   subdomain: string;
   logo?: string;
-  permissions: {
-    allowCustomBranding: boolean;
-    allowAiCorrection: boolean;
-    allowSmartAnalyst: boolean;
-    allowAiUsage: boolean;
-    allowFinancialLedger: boolean;
-    allowLiveStreaming: boolean;
+
+  // -- NEW GOVERNANCE LAYER (SaaS) --
+  features: {
+    hasAccounting: boolean;
+    hasBranding: boolean;
+    hasSecretary: boolean;
+    hasAI: boolean;
+    hasApiAccess: boolean;
+
+    // Backward compatibility mappings (Deprecated)
+    allowCustomBranding?: boolean;
+    allowAiCorrection?: boolean;
+    allowSmartAnalyst?: boolean;
+    allowAiUsage?: boolean;
+    allowFinancialLedger?: boolean;
+    allowLiveStreaming?: boolean;
   };
-  limits: {
-    admins: number;
-    teachers: number;
-    accountants: number;
-    students: number;
+
+  quotas: {
+    maxStudents: number;
+    maxTeachers: number;
+    maxStorageGB: number;
+    // Backward compatibility
+    admins?: number;
+    teachers?: number;
+    accountants?: number;
+    students?: number;
   };
-  pricing: {
-    model: PricingModel;
-    totalAmount: number;
-    paidAmount: number;
-    revenue?: number; // Added to fix implicit revenue prop
+
+  subscription: {
+    plan: 'GOLD' | 'SILVER' | 'FREE';
+    status: 'ACTIVE' | 'EXPIRED' | 'SUSPENDED';
+    startDate: string;
+    endDate: string;
+    // Backward compatibility
+    model?: PricingModel;
+    totalAmount?: number;
+    paidAmount?: number;
+    revenue?: number;
   };
+
+  settings: {
+    apiKey?: string;
+  };
+
+  // -- Legacy Props (Deprecated but kept for stability) --
+  permissions?: any; // To allow legacy checks if any
+  limits?: any;
+  pricing?: any;
+
   paymentHistory: PaymentLog[];
   expiryDate: string;
   status: string;
@@ -161,19 +190,6 @@ export interface FinancialEntry {
   isPosted?: boolean;
   isCanceled?: boolean;
   targetId?: string; // To link with student/employee/supplier
-  taxAmount?: number;
-  netAmount?: number;
-  status?: 'draft' | 'posted';
-  invoiceNumber?: string;
-}
-
-export interface FinancialSettings {
-  companyName: string;
-  taxId: string;
-  taxRate: number;
-  isTaxInclusive: boolean;
-  currency: string;
-  institutionId: string;
 }
 
 export interface FinancialFund {
@@ -561,4 +577,27 @@ export interface TimetableEntry {
   roomId?: string; // Room ID or name
   gradeLevelId: string;
   institutionId: string;
+}
+
+// --- New Finance Module Types ---
+export interface FinanceConfig {
+  companyName: string;
+  taxNumber: string;
+  vatRate: number; // e.g., 15
+  currency: string;
+  isTaxIncluded: boolean;
+}
+
+export interface FinanceTransaction {
+  id: string;
+  type: 'INCOME' | 'EXPENSE';
+  category: string;
+  amount: number;
+  date: string;
+  description: string;
+  studentId?: string; // Optional link to student
+  // Tax Fields (Calculated)
+  taxAmount: number;
+  baseAmount: number;
+  status: 'COMPLETED' | 'REFUNDED';
 }

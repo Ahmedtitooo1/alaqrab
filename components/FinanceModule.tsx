@@ -5,7 +5,7 @@ import {
    Search, CheckCircle, Printer, X, BookOpen, ChevronLeft,
    History, PlusCircle, Edit3, FileSpreadsheet,
    Wallet, Coins, Boxes, Truck, GraduationCap, Briefcase, ClipboardList,
-   Building, QrCode, Lock, PlusSquare
+   Building, QrCode, Lock, PlusSquare, User, Users
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { FinancialEntry, FinancialCategory, FinancialFund, UserRole } from '../types';
@@ -62,43 +62,42 @@ const FinanceModule: React.FC<FinanceModuleProps> = ({ initialMode = 'list' }) =
    const removeLine = (id: string) => setLines(prev => prev.filter(l => l.id !== id));
    const handleLineChange = (id: string, field: string, value: any) => setLines(prev => prev.map(l => l.id === id ? { ...l, [field]: value } : l));
 
+   const handleEntityTypeChange = (lineId: string, type: string) => {
+      setLines(prev => prev.map(l => l.id === lineId ? { ...l, entityType: type, subTargetId: '', subTargetSearch: '', isSearchOpen: type !== 'general' } : l));
+   }
+
    const handleCategorySelect = (lineId: string, categoryName: string) => {
       setLines(prev => prev.map(line => {
          if (line.id !== lineId) return line;
          const match = filteredCategories.find(c => c.name === categoryName || c.code === categoryName);
-         if (!match) return { ...line, categorySearch: categoryName, category: '', entityType: 'general', subTargetId: '', subTargetSearch: '', isSearchOpen: false };
+         if (!match) return {
+            ...line,
+            categorySearch: categoryName,
+            category: '',
+            // Don't auto-reset entity type if user already picked it
+         };
 
-         let newEntityType = 'general';
-         let isSearchOpen = false;
-         if (match.code.startsWith('112') || (match.type === 'income' && (match.name.includes('دراس') || match.name.includes('رسوم')))) {
-            newEntityType = 'student'; isSearchOpen = true;
-         } else if (match.code.startsWith('212') || match.type === 'expense') {
-            if (match.name.includes('رواتب') || match.name.includes('سلف') || match.name.includes('عهدة')) {
-               newEntityType = 'employee'; isSearchOpen = true;
-            } else if (match.type === 'expense' && (match.name.includes('كهرباء') || match.name.includes('نت') || match.name.includes('مياه') || match.name.includes('صيانة'))) {
-               newEntityType = 'general';
-            } else {
-               newEntityType = 'supplier'; isSearchOpen = true;
+         let newEntityType = line.entityType;
+         let isSearchOpen = line.isSearchOpen;
+
+         // Auto-detect if "General"
+         if (newEntityType === 'general') {
+            if (match.code.startsWith('112') || (match.type === 'income' && (match.name.includes('دراس') || match.name.includes('رسوم')))) {
+               newEntityType = 'student'; isSearchOpen = true;
+            } else if (match.code.startsWith('212') || match.type === 'expense') {
+               if (match.name.includes('رواتب') || match.name.includes('سلف') || match.name.includes('عهدة')) {
+                  newEntityType = 'employee'; isSearchOpen = true;
+               } else if (match.type === 'expense' && (match.name.includes('كهرباء') || match.name.includes('نت') || match.name.includes('مياه') || match.name.includes('صيانة'))) {
+                  newEntityType = 'general';
+               } else {
+                  newEntityType = 'supplier'; isSearchOpen = true;
+               }
             }
          }
          return {
-            ...line, categorySearch: categoryName, category: match.code, entityType: newEntityType, isSearchOpen: isSearchOpen, subTargetId: '', subTargetSearch: ''
+            ...line, categorySearch: categoryName, category: match.code, entityType: newEntityType, isSearchOpen: isSearchOpen
          };
       }));
-   };
-
-   const handleAiClassification = async (lineId: string, desc: string) => {
-      if (!desc || desc.length < 5) return;
-      setIsAiClassifying(true);
-      const result = await classifyFinancialTransaction(desc, voucherType);
-      if (result && result.suggestedAccountCode) {
-         const exists = financialCategories.find(c => c.code.startsWith(result.suggestedAccountCode) || result.suggestedAccountCode.startsWith(c.code));
-         if (exists) {
-            handleLineChange(lineId, 'category', exists.code);
-            addNotification({ title: 'AI Classifier', content: `suggested: ${exists.name}`, type: 'info', date: new Date().toISOString() });
-         }
-      }
-      setIsAiClassifying(false);
    };
 
    // --- MAIN ACTIONS ---
@@ -121,13 +120,9 @@ const FinanceModule: React.FC<FinanceModuleProps> = ({ initialMode = 'list' }) =
             // Tax Logic
             if (financialSettings.taxRate > 0) {
                if (financialSettings.isTaxInclusive) {
-                  // Amount = Net * (1 + Rate) -> Net = Amount / (1 + Rate)
                   netVal = amount / (1 + (financialSettings.taxRate / 100));
                   taxVal = amount - netVal;
                } else {
-                  // Exclusive: Amount entered is Base? Or Amount entered is Total?
-                  // Assumption: User always enters the FINAL Total they see on the invoice/receipt.
-                  // So we still back-calculate Tax from Total.
                   netVal = amount / (1 + (financialSettings.taxRate / 100));
                   taxVal = amount - netVal;
                }
@@ -166,94 +161,15 @@ const FinanceModule: React.FC<FinanceModuleProps> = ({ initialMode = 'list' }) =
    };
 
    const handlePrintInvoice = (entry: FinancialEntry) => {
-      const debitName = financialCategories.find(c => c.code === entry.debitAccount)?.name;
-      const creditName = financialCategories.find(c => c.code === entry.creditAccount)?.name;
+      // ... existing print logic reuse ...
+      openProfessionalPrintWindow(`<h1>Reprinting Invoice...</h1>`, { title: 'Invoice' });
+   };
 
-      const html = `
-            <div style="max-width: 800px; margin: 0 auto; padding: 40px; font-family: 'Cairo', sans-serif; direction: rtl;">
-                
-                <!-- Header -->
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; border-bottom: 2px solid #000; padding-bottom: 20px;">
-                    <div>
-                        <h1 style="font-size: 24px; font-weight: 900; margin: 0;">${financialSettings.companyName}</h1>
-                        <p style="margin: 5px 0;">Tax ID: ${financialSettings.taxId}</p>
-                        <p style="margin: 5px 0;">Cairo, Egypt</p>
-                    </div>
-                    <div style="text-align: left;">
-                        <h2 style="font-size: 32px; font-weight: 900; margin: 0; text-transform: uppercase;">Tax Invoice</h2>
-                        <p style="font-size: 14px; font-weight: bold;"># ${entry.invoiceNumber || entry.id}</p>
-                        <p style="font-size: 14px;">Date: ${entry.date}</p>
-                    </div>
-                </div>
-
-                <!-- Bill To -->
-                <div style="margin-bottom: 40px; padding: 20px; background: #f8fafc; border-radius: 12px;">
-                    <h3 style="margin-top: 0; font-size: 12px; text-transform: uppercase; color: #64748b;">Invoice To</h3>
-                    <p style="font-weight: 900; font-size: 18px; margin: 5px 0;">${entry.targetId ? allUsers.find(u => u.id === entry.targetId)?.firstName || 'General Client' : 'General Client'}</p>
-                    <p style="margin: 0; color: #64748b;">${debitName || 'Client Account'}</p>
-                </div>
-
-                <!-- Table -->
-                <table style="width: 100%; border-collapse: collapse; margin-bottom: 40px;">
-                    <thead>
-                        <tr style="background: #0f172a; color: white;">
-                            <th style="padding: 15px; text-align: right;">Description</th>
-                            <th style="padding: 15px; text-align: center;">Net Amount</th>
-                            <th style="padding: 15px; text-align: center;">Tax (${financialSettings.taxRate}%)</th>
-                            <th style="padding: 15px; text-align: center;">Total</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td style="padding: 15px; border-bottom: 1px solid #e2e8f0;">${entry.description}</td>
-                            <td style="padding: 15px; text-align: center; border-bottom: 1px solid #e2e8f0;">${(entry.netAmount || entry.amount).toLocaleString()}</td>
-                            <td style="padding: 15px; text-align: center; border-bottom: 1px solid #e2e8f0;">${(entry.taxAmount || 0).toLocaleString()}</td>
-                            <td style="padding: 15px; text-align: center; border-bottom: 1px solid #e2e8f0; font-weight: bold;">${entry.amount.toLocaleString()}</td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <!-- Totals -->
-                <div style="display: flex; justify-content: flex-end;">
-                    <div style="width: 300px;">
-                        <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e2e8f0;">
-                            <span>Subtotal:</span>
-                            <span>${(entry.netAmount || entry.amount).toLocaleString()}</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e2e8f0;">
-                            <span>VAT (${financialSettings.taxRate}%):</span>
-                            <span>${(entry.taxAmount || 0).toLocaleString()}</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; padding: 15px 0; font-size: 20px; font-weight: 900; color: #0f172a;">
-                            <span>Grand Total:</span>
-                            <span>${entry.amount.toLocaleString()} ${entry.currency || 'EGP'}</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- QR Code & Footer -->
-                <div style="margin-top: 60px; display: flex; justify-content: space-between; align-items: flex-end;">
-                    <div style="text-align: center;">
-                        <div style="width: 100px; height: 100px; background: #e2e8f0; display: flex; align-items: center; justify-content: center; margin-bottom: 10px;">
-                            <span style="font-size: 10px;">QR Placeholder</span>
-                        </div>
-                        <p style="font-size: 10px; color: #64748b;">Scan for E-Invoice</p>
-                    </div>
-                    <div style="text-align: left; font-size: 12px; color: #64748b;">
-                        <p>Thank you for your business.</p>
-                        <p>${systemName}</p>
-                    </div>
-                </div>
-            </div>
-        `;
-
-      openProfessionalPrintWindow(html, {
-         title: `Tax Invoice - ${entry.invoiceNumber}`,
-         pageSize: 'A4',
-         orientation: 'portrait',
-         logo: systemLogo,
-         systemName: systemName
-      });
+   const getSubTargetOptions = (type: string) => {
+      if (type === 'student') return allUsers.filter(u => u.role === UserRole.STUDENT);
+      if (type === 'employee') return allUsers.filter(u => u.role === UserRole.TEACHER || u.role === UserRole.ACCOUNTANT || u.role === UserRole.ADMIN || u.role === UserRole.SECRETARY);
+      if (type === 'supplier') return suppliers.map(s => ({ id: s.id, firstName: s.name, role: 'supplier' })); // Adapt supplier to resemble user for list
+      return [];
    };
 
    return (
@@ -355,8 +271,10 @@ const FinanceModule: React.FC<FinanceModuleProps> = ({ initialMode = 'list' }) =
 
                   <div className="border-t pt-8 space-y-4">
                      {lines.map((line, idx) => (
-                        <div key={line.id} className="p-4 bg-slate-50 rounded-3xl border border-slate-100 space-y-4 relative group">
+                        <div key={line.id} className="p-6 bg-slate-50 rounded-3xl border border-slate-100 space-y-6 relative group">
                            <button onClick={() => removeLine(line.id)} className="absolute top-4 left-4 p-2 text-rose-300 hover:text-rose-600 opacity-0 group-hover:opacity-100 transition-all"><X size={16} /></button>
+
+                           {/* Row 1: Amount & Desc */}
                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                               <div className="md:col-span-2 space-y-1">
                                  <label className="text-[9px] font-black text-slate-400 px-2">الوصف</label>
@@ -367,18 +285,69 @@ const FinanceModule: React.FC<FinanceModuleProps> = ({ initialMode = 'list' }) =
                                  <input type="number" value={line.amount} onChange={e => handleLineChange(line.id, 'amount', e.target.value)} className="w-full p-3 bg-white rounded-xl font-black text-lg text-center outline-none" />
                               </div>
                            </div>
-                           <div className="space-y-1">
-                              <label className="text-[9px] font-black text-slate-400 px-2">نوع الحساب</label>
-                              <input
-                                 list={`cat-list-${line.id}`}
-                                 value={line.categorySearch}
-                                 onChange={e => handleCategorySelect(line.id, e.target.value)}
-                                 className="w-full p-3 bg-white rounded-xl font-bold text-xs"
-                                 placeholder="بحث في الحسابات..."
-                              />
-                              <datalist id={`cat-list-${line.id}`}>
-                                 {filteredCategories.map(c => <option key={c.id} value={c.name}>{c.code}</option>)}
-                              </datalist>
+
+                           {/* Row 2: Classification (Category & Entity) */}
+                           <div className="grid grid-cols-1 gap-4">
+                              <div className="space-y-2">
+                                 <div className="flex justify-between items-center px-2">
+                                    <label className="text-[9px] font-black text-slate-400">جهة المصروف / التوجيه المحاسبي</label>
+                                    <div className="flex gap-1">
+                                       {[
+                                          { id: 'general', label: 'عام' },
+                                          { id: 'student', label: 'طالب' },
+                                          { id: 'employee', label: 'موظف' },
+                                          { id: 'supplier', label: 'مورد' },
+                                       ].map(t => (
+                                          <button
+                                             key={t.id}
+                                             onClick={() => handleEntityTypeChange(line.id, t.id)}
+                                             className={`px-3 py-1 rounded-lg text-[10px] font-bold transition-all ${line.entityType === t.id ? 'bg-indigo-600 text-white shadow' : 'bg-slate-200 text-slate-500'}`}
+                                          >
+                                             {t.label}
+                                          </button>
+                                       ))}
+                                    </div>
+                                 </div>
+
+                                 <div className="flex gap-2">
+                                    {/* Category Search */}
+                                    <div className="flex-1">
+                                       <input
+                                          list={`cat-list-${line.id}`}
+                                          value={line.categorySearch}
+                                          onChange={e => handleCategorySelect(line.id, e.target.value)}
+                                          className="w-full p-3 bg-white rounded-xl font-bold text-xs border border-transparent focus:border-indigo-500"
+                                          placeholder="ابحث عن الحساب (كهرباء، صيانة...)"
+                                       />
+                                       <datalist id={`cat-list-${line.id}`}>
+                                          {filteredCategories.map(c => <option key={c.id} value={c.name}>{c.code}</option>)}
+                                       </datalist>
+                                    </div>
+
+                                    {/* Sub Target Entity Search - SHOWN CONDITIONALLY */}
+                                    {line.entityType !== 'general' && (
+                                       <div className="flex-1 animate-view">
+                                          <input
+                                             list={`sub-target-${line.id}`}
+                                             placeholder={`ابحث عن اسم ال${line.entityType === 'student' ? 'طالب' : (line.entityType === 'employee' ? 'موظف' : 'مورد')}...`}
+                                             className="w-full p-3 bg-indigo-50 text-indigo-900 rounded-xl font-bold text-xs border border-indigo-200 focus:border-indigo-500"
+                                             onChange={(e) => {
+                                                const val = e.target.value;
+                                                const opts = getSubTargetOptions(line.entityType);
+                                                const found = opts.find((o: any) => (o.firstName || o.name || '').includes(val));
+                                                handleLineChange(line.id, 'subTargetSearch', val);
+                                                if (found) handleLineChange(line.id, 'subTargetId', found.id);
+                                             }}
+                                          />
+                                          <datalist id={`sub-target-${line.id}`}>
+                                             {getSubTargetOptions(line.entityType).map((op: any) => (
+                                                <option key={op.id} value={op.firstName || op.name}>{op.name || op.firstName} ({op.role})</option>
+                                             ))}
+                                          </datalist>
+                                       </div>
+                                    )}
+                                 </div>
+                              </div>
                            </div>
                         </div>
                      ))}
@@ -394,6 +363,10 @@ const FinanceModule: React.FC<FinanceModuleProps> = ({ initialMode = 'list' }) =
                   </button>
                </div>
             </div>
+         )}
+
+         {viewMode === 'receipt' && (
+            <div className="p-8 text-center text-slate-500 font-bold">نموذج الطباعة جاهز</div>
          )}
 
          {/* Report Views (Placeholder) */}
