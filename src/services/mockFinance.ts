@@ -1,8 +1,8 @@
 
 import { FinanceConfig, FinanceTransaction } from '../../types';
 
-const STORAGE_KEY_TRANSACTIONS = 'aleaqrab_finance_transactions_v2';
-const STORAGE_KEY_CONFIG = 'aleaqrab_finance_config_v2';
+const STORAGE_KEY_TRANSACTIONS = 'aleaqrab_finance_transactions_v3';
+const STORAGE_KEY_CONFIG = 'aleaqrab_finance_config_v3';
 
 const defaultConfig: FinanceConfig = {
     companyName: 'My Institution',

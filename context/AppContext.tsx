@@ -117,13 +117,13 @@ import translations from '../src/locales/translations';
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [lang, setLangState] = useState<'ar' | 'en'>(() => {
-    const saved = localStorage.getItem('aleaqrab_lang_v2');
+    const saved = localStorage.getItem('aleaqrab_lang_v3');
     return (saved === 'en' ? 'en' : 'ar') as 'ar' | 'en';
   });
 
   const setLang = (l: 'ar' | 'en') => {
     setLangState(l);
-    localStorage.setItem('aleaqrab_lang_v2', l);
+    localStorage.setItem('aleaqrab_lang_v3', l);
     document.documentElement.dir = l === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.lang = l;
   };
@@ -138,7 +138,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Persistence Helper
   const loadState = <T,>(key: string, defaultValue: T): T => {
     try {
-      const saved = localStorage.getItem(`aleaqrab_${key}_v2`);
+      const saved = localStorage.getItem(`aleaqrab_${key}_v3`);
       return saved ? JSON.parse(saved) : defaultValue;
     } catch { return defaultValue; }
   };
@@ -197,7 +197,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // Persist State Changes
   useEffect(() => {
-    const save = (key: string, data: any) => localStorage.setItem(`aleaqrab_${key}_v2`, JSON.stringify(data));
+    const save = (key: string, data: any) => localStorage.setItem(`aleaqrab_${key}_v3`, JSON.stringify(data));
     save('currentUser', user);
     save('currentTenant', currentTenant);
     save('systemName', systemName);
