@@ -5,7 +5,7 @@ import {
    Search, CheckCircle, Printer, X, BookOpen, ChevronLeft,
    History, PlusCircle, Edit3, FileSpreadsheet,
    Wallet, Coins, Boxes, Truck, GraduationCap, Briefcase, ClipboardList,
-   Building, QrCode, Lock
+   Building, QrCode, Lock, PlusSquare
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { FinancialEntry, FinancialCategory, FinancialFund, UserRole } from '../types';

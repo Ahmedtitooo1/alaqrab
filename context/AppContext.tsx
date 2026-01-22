@@ -117,13 +117,13 @@ import translations from '../src/locales/translations';
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [lang, setLangState] = useState<'ar' | 'en'>(() => {
-    const saved = localStorage.getItem('aleaqrab_lang');
+    const saved = localStorage.getItem('aleaqrab_lang_v2');
     return (saved === 'en' ? 'en' : 'ar') as 'ar' | 'en';
   });
 
   const setLang = (l: 'ar' | 'en') => {
     setLangState(l);
-    localStorage.setItem('aleaqrab_lang', l);
+    localStorage.setItem('aleaqrab_lang_v2', l);
     document.documentElement.dir = l === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.lang = l;
   };
@@ -138,7 +138,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Persistence Helper
   const loadState = <T,>(key: string, defaultValue: T): T => {
     try {
-      const saved = localStorage.getItem(`aleaqrab_${key}`);
+      const saved = localStorage.getItem(`aleaqrab_${key}_v2`);
       return saved ? JSON.parse(saved) : defaultValue;
     } catch { return defaultValue; }
   };
@@ -197,7 +197,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // Persist State Changes
   useEffect(() => {
-    const save = (key: string, data: any) => localStorage.setItem(`aleaqrab_${key}`, JSON.stringify(data));
+    const save = (key: string, data: any) => localStorage.setItem(`aleaqrab_${key}_v2`, JSON.stringify(data));
     save('currentUser', user);
     save('currentTenant', currentTenant);
     save('systemName', systemName);
@@ -304,6 +304,29 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const tenantProctoring = proctoringLogs.filter(p => (p as any).institutionId === instId);
     const tenantPaymentRequests = paymentRequests.filter(p => p.institutionId === instId);
 
+    // --- Helper Functions hoisted for internal use ---
+    const playNotificationSound = () => {
+      try {
+        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.1, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.1);
+      } catch (e) { console.error("Audio play failed", e); }
+    };
+
+    const _addNotification = (n: Omit<Notification, 'id' | 'isRead' | 'institutionId'>) => {
+      playNotificationSound();
+      setNotifications(prev => [{ ...n, id: Date.now().toString(), isRead: false, institutionId: instId } as Notification, ...prev]);
+    };
+
     return {
       lang, user, originalAdmin,
       financialCategories: tenantCategories,
@@ -324,14 +347,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       proctoringLogs: tenantProctoring,
       paymentRequests: tenantPaymentRequests,
       subjects: subjects.filter(s => (s as any).institutionId === instId),
-      subjects: subjects.filter(s => (s as any).institutionId === instId),
       gradeLevels: gradeLevels.filter(g => g.institutionId === instId),
       financialSettings: { ...financialSettings, institutionId: instId },
 
       saveFinancialSettings: (s) => setFinancialSettings({ ...s, institutionId: instId }),
       postFinancialEntries: () => {
         setFinancialEntries(prev => prev.map(e => (e.institutionId === instId && (!e.status || e.status === 'draft')) ? { ...e, status: 'posted' } : e));
-        addNotification({ title: 'Shift Closed', content: 'All draft entries have been posted successfully.', type: 'success' });
+        _addNotification({ title: 'Shift Closed', content: 'All draft entries have been posted successfully.', type: 'success', date: new Date().toISOString() });
       },
 
       addSubject: (s) => setSubjects(prev => [...prev, { ...s, institutionId: instId } as any]),
@@ -339,26 +361,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       deleteSubject: (id) => setSubjects(prev => prev.filter(s => s.id !== id)),
 
       setLang, setUser, t,
-      addNotification: (n: any) => {
-        const playNotificationSound = () => {
-          try {
-            const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(880, ctx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.1);
-            gain.gain.setValueAtTime(0.1, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
-            osc.start();
-            osc.stop(ctx.currentTime + 0.1);
-          } catch (e) { console.error("Audio play failed", e); }
-        };
-        playNotificationSound();
-        setNotifications(prev => [{ ...n, id: Date.now().toString(), isRead: false, institutionId: instId }, ...prev]);
-      },
+      addNotification: _addNotification,
       addFinancialEntry: (e: any) => setFinancialEntries(prev => [{ ...e, institutionId: instId }, ...prev]),
       updateFinancialEntry: (u: any) => setFinancialEntries(prev => prev.map(e => e.id === u.id ? { ...u, institutionId: instId } : e)),
       deleteFinancialEntry: (id: string) => setFinancialEntries(prev => prev.filter(e => e.id !== id)),
