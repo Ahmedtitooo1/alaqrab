@@ -1,15 +1,22 @@
 import React, { useState, useMemo } from 'react';
 import {
     FolderTree, Wallet, Plus, Edit2, Trash2, ChevronRight, ChevronDown,
-    Search, Save, X, Building2, CreditCard, Banknote, Landmark
+    Search, Save, X, Building2, CreditCard, Banknote, Landmark, FileText
 } from 'lucide-react';
 import { useAppContext } from '../../../context/AppContext';
 import { FinancialCategory, FinancialFund } from '../../../types';
+import AccountLedger from './AccountLedger';
 
 const ChartOfAccounts: React.FC = () => {
     const { financialCategories, funds, lang } = useAppContext();
     const isRtl = lang === 'ar';
     const [activeTab, setActiveTab] = useState<'chart' | 'funds'>('chart');
+    const [selectedAccount, setSelectedAccount] = useState<FinancialCategory | null>(null);
+
+    // If viewing account ledger, show that instead
+    if (selectedAccount) {
+        return <AccountLedger account={selectedAccount} onBack={() => setSelectedAccount(null)} />;
+    }
 
     return (
         <div className="space-y-8 animate-view pb-24" dir={isRtl ? 'rtl' : 'ltr'}>
@@ -49,7 +56,7 @@ const ChartOfAccounts: React.FC = () => {
 
             {/* Content */}
             <div className="glass-panel p-8 bg-white rounded-[2.5rem] border shadow-sm min-h-[600px]">
-                {activeTab === 'chart' ? <AccountTreeView categories={financialCategories} /> : <FundsManager funds={funds} categories={financialCategories} />}
+                {activeTab === 'chart' ? <AccountTreeView categories={financialCategories} onViewLedger={setSelectedAccount} /> : <FundsManager funds={funds} categories={financialCategories} />}
             </div>
         </div>
     );
@@ -57,7 +64,7 @@ const ChartOfAccounts: React.FC = () => {
 
 // --- Tree View Components ---
 
-const AccountTreeView: React.FC<{ categories: FinancialCategory[] }> = ({ categories: initialCategories }) => {
+const AccountTreeView: React.FC<{ categories: FinancialCategory[], onViewLedger: (account: FinancialCategory) => void }> = ({ categories: initialCategories, onViewLedger }) => {
     const [categories, setCategories] = useState(initialCategories);
     const [searchTerm, setSearchTerm] = useState('');
     const [expanded, setExpanded] = useState<Record<string, boolean>>({
@@ -157,9 +164,9 @@ const AccountTreeView: React.FC<{ categories: FinancialCategory[] }> = ({ catego
                     </div>
 
                     <div className={`px-2 py-1 rounded-md font-mono text-xs font-bold w-16 text-center ${node.type === 'asset' ? 'bg-emerald-50 text-emerald-600' :
-                            node.type === 'liability' ? 'bg-rose-50 text-rose-600' :
-                                node.type === 'equity' ? 'bg-blue-50 text-blue-600' :
-                                    'bg-slate-100 text-slate-600'
+                        node.type === 'liability' ? 'bg-rose-50 text-rose-600' :
+                            node.type === 'equity' ? 'bg-blue-50 text-blue-600' :
+                                'bg-slate-100 text-slate-600'
                         }`}>
                         {node.code}
                     </div>
@@ -170,6 +177,7 @@ const AccountTreeView: React.FC<{ categories: FinancialCategory[] }> = ({ catego
                     </div>
 
                     <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+                        <button onClick={(e) => { e.stopPropagation(); onViewLedger(node); }} className="p-2 bg-white border rounded-lg text-slate-400 hover:text-blue-600 shadow-sm" title="عرض التفاصيل"><FileText size={14} /></button>
                         <button onClick={(e) => { e.stopPropagation(); handleEdit(node); }} className="p-2 bg-white border rounded-lg text-slate-400 hover:text-indigo-600 shadow-sm" title="تعديل"><Edit2 size={14} /></button>
                         {!hasChildren && (
                             <button onClick={(e) => { e.stopPropagation(); handleDelete(node.id); }} className="p-2 bg-white border rounded-lg text-slate-400 hover:text-rose-600 shadow-sm" title="حذف"><Trash2 size={14} /></button>

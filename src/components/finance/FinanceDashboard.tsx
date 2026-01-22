@@ -1,18 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { FinanceTransaction, FinanceConfig } from '../../../types';
-import { getTransactions, addTransaction, getFinanceConfig, seedMockData } from '../../services/mockFinance';
+import { getTransactions, addTransaction, getFinanceConfig } from '../../services/mockFinance';
 import FinanceSettings from './FinanceSettings';
 import { Plus, Printer, Download, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
 import { useAppContext } from '../../../context/AppContext';
 
 const FinanceDashboard: React.FC = () => {
     const { user } = useAppContext();
-    useEffect(() => {
-        seedMockData(); // Ensure mock data exists
-        refreshData();
-    }, []); // Run ONCE on mount
-
     const [view, setView] = useState<'transactions' | 'settings'>('transactions');
     const [transactions, setTransactions] = useState<FinanceTransaction[]>([]);
     const [config, setConfig] = useState<FinanceConfig | null>(null); // Should load

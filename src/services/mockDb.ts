@@ -100,14 +100,14 @@ const suppliers: Supplier[] = [
     { id: 'sup-2', code: 'SUP-002', name: 'شركة النور للتوريدات', phone: '01222222222', balance: 2500, institutionId: 'tenant-a' },
 ];
 
-// --- 6-MONTH SIMULATOR ---
+// --- 9-MONTH SIMULATOR ---
 
 const entries: FinancialEntry[] = [];
-const startDate = new Date('2025-08-01'); // 6 Months ago
+const startDate = new Date('2025-05-01'); // 9 Months ago (May 2025)
 const endDate = new Date('2026-01-22'); // Now (approx)
 
-// 1. Initial Capital (Aug 1st)
-entries.push({ id: 'VCH-INIT-001', date: '2025-08-01', description: 'إيداع رأس المال الافتتاحي', amount: 500000, debitAccount: '11102', creditAccount: '310', status: 'posted', institutionId: 'tenant-a' });
+// 1. Initial Capital (May 1st - Start of 9-month period)
+entries.push({ id: 'VCH-INIT-001', date: '2025-05-01', description: 'إيداع رأس المال الافتتاحي', amount: 500000, debitAccount: '11102', creditAccount: '310', status: 'posted', institutionId: 'tenant-a' });
 
 // 2. Monthly Expenses Loop
 let current = new Date(startDate);
