@@ -4,7 +4,7 @@ import { FinanceTransaction, FinanceConfig } from '../../types';
 import { getTransactions, addTransaction, getFinanceConfig } from '../../services/mockFinance';
 import FinanceSettings from './FinanceSettings';
 import { Plus, Printer, Download, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
-import { useAppContext } from '../../context/AppContext';
+import { useAppContext } from '../../../context/AppContext';
 
 const FinanceDashboard: React.FC = () => {
     const { user } = useAppContext();

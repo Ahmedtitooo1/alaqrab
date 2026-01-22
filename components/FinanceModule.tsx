@@ -5,7 +5,7 @@ import {
    Search, CheckCircle, Printer, X, BookOpen, ChevronLeft,
    History, PlusCircle, Edit3, FileSpreadsheet,
    Wallet, Coins, Boxes, Truck, GraduationCap, Briefcase, ClipboardList,
-   Building, QrCode, Lock, PlusSquare, User, Users
+   Building, QrCode, Lock, PlusSquare, User, Users, BarChart3, PieChart
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { FinancialEntry, FinancialCategory, FinancialFund, UserRole } from '../types';
@@ -31,6 +31,17 @@ const FinanceModule: React.FC<FinanceModuleProps> = ({ initialMode = 'list' }) =
    const [isAiClassifying, setIsAiClassifying] = useState(false);
    const [isProcessing, setIsProcessing] = useState(false);
    const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
+
+   // Z-Report State
+   const [zReportData, setZReportData] = useState({
+      actualCash: 0,
+      selectedFund: '',
+      notes: ''
+   });
+
+   // Add Fund State
+   const [newFund, setNewFund] = useState({ name: '', type: 'cash' as any, balance: 0, accountCode: '11105' });
+   const [showAddFund, setShowAddFund] = useState(false);
 
    const [header, setHeader] = useState({
       entryNo: 'VCH-' + Date.now().toString().slice(-6),
@@ -74,13 +85,11 @@ const FinanceModule: React.FC<FinanceModuleProps> = ({ initialMode = 'list' }) =
             ...line,
             categorySearch: categoryName,
             category: '',
-            // Don't auto-reset entity type if user already picked it
          };
 
          let newEntityType = line.entityType;
          let isSearchOpen = line.isSearchOpen;
 
-         // Auto-detect if "General"
          if (newEntityType === 'general') {
             if (match.code.startsWith('112') || (match.type === 'income' && (match.name.includes('دراس') || match.name.includes('رسوم')))) {
                newEntityType = 'student'; isSearchOpen = true;
@@ -106,9 +115,8 @@ const FinanceModule: React.FC<FinanceModuleProps> = ({ initialMode = 'list' }) =
       const total = lines.reduce((sum, l) => sum + parseFloat(l.amount || 0), 0);
       if (total <= 0) return alert("لا يمكن ترحيل سند بمبلغ صفر");
 
-      setIsProcessing(true); // Disable button immediately
+      setIsProcessing(true);
 
-      // Simulate Async Save for Robustness
       setTimeout(() => {
          if (editingEntryId) deleteFinancialEntry(editingEntryId);
 
@@ -117,41 +125,33 @@ const FinanceModule: React.FC<FinanceModuleProps> = ({ initialMode = 'list' }) =
             let taxVal = 0;
             let netVal = amount;
 
-            // Tax Logic
             if (financialSettings.taxRate > 0) {
-               if (financialSettings.isTaxInclusive) {
-                  netVal = amount / (1 + (financialSettings.taxRate / 100));
-                  taxVal = amount - netVal;
-               } else {
-                  netVal = amount / (1 + (financialSettings.taxRate / 100));
-                  taxVal = amount - netVal;
-               }
+               netVal = amount / (1 + (financialSettings.taxRate / 100));
+               taxVal = amount - netVal;
             }
 
-            // Create Entry
             const entry: FinancialEntry = {
                id: header.entryNo + (lines.length > 1 ? '-' + line.id : ''),
                date: header.date,
                description: `${line.description || header.description}${line.subTargetId ? ' - Ent: ' + (allUsers.find(u => u.id === line.subTargetId)?.firstName || '') : ''}`,
-               amount: amount, // TOTAL Amount
+               amount: amount,
                taxAmount: parseFloat(taxVal.toFixed(2)),
                netAmount: parseFloat(netVal.toFixed(2)),
                debitAccount: voucherType === 'spending' ? line.category : header.fundAccount,
                creditAccount: voucherType === 'spending' ? header.fundAccount : line.category,
                institutionId: user?.institutionId || '',
                targetId: line.subTargetId,
-               refType: 'invoice', // Marking as invoice for printing purposes
+               refType: 'invoice',
                currency: header.currency,
                exchangeRate: header.exchangeRate,
-               status: 'draft', // Default to Draft
-               invoiceNumber: `INV-${Date.now()}` // Generate Invoice Number
+               status: 'draft',
+               invoiceNumber: `INV-${Date.now()}`
             };
             addFinancialEntry(entry);
          });
 
          addNotification({ title: 'Success', content: 'Entry Saved Successfully', type: 'success', date: new Date().toISOString() });
 
-         // Reset Form
          setViewMode('list');
          setEditingEntryId(null);
          setHeader({ ...header, entryNo: 'VCH-' + Date.now().toString().slice(-6), description: '', totalAmount: 0 });
@@ -161,14 +161,47 @@ const FinanceModule: React.FC<FinanceModuleProps> = ({ initialMode = 'list' }) =
    };
 
    const handlePrintInvoice = (entry: FinancialEntry) => {
-      // ... existing print logic reuse ...
+      const debitName = financialCategories.find(c => c.code === entry.debitAccount)?.name;
       openProfessionalPrintWindow(`<h1>Reprinting Invoice...</h1>`, { title: 'Invoice' });
+   };
+
+   const handleAddFund = () => {
+      if (!newFund.name) return;
+      addFinancialFund({
+         id: `fund-${Date.now()}`,
+         name: newFund.name,
+         type: newFund.type,
+         balance: newFund.balance,
+         accountCode: newFund.accountCode,
+         institutionId: user?.institutionId || ''
+      });
+      setShowAddFund(false);
+      setNewFund({ name: '', type: 'cash', balance: 0, accountCode: '11105' });
+   };
+
+   const handleZReport = () => {
+      if (!zReportData.selectedFund) return alert("اختر الخزينة");
+      const fund = funds.find(f => f.id === zReportData.selectedFund);
+      if (!fund) return;
+
+      const todayEntries = financialEntries.filter(e => e.date === new Date().toISOString().split('T')[0]);
+      const income = todayEntries.filter(e => e.creditAccount === fund.accountCode).reduce((a, b) => a + b.amount, 0); // Money In if fund is Debited (Wait, standard logic: Fund Debit = Increase)
+      // Let's stick to simple logic: Debit Account = Fund -> Money IN. Credit Account = Fund -> Money OUT.
+
+      const moneyIn = todayEntries.filter(e => e.debitAccount === fund.accountCode).reduce((a, b) => a + b.amount, 0);
+      const moneyOut = todayEntries.filter(e => e.creditAccount === fund.accountCode).reduce((a, b) => a + b.amount, 0);
+
+      const expected = fund.balance; // Current balance is practically expected if updated real-time
+      const diff = zReportData.actualCash - expected;
+
+      alert(`Z-Report Generated!\nMoney In: ${moneyIn}\nMoney Out: ${moneyOut}\nDiff: ${diff}`);
+      // Trigger Print...
    };
 
    const getSubTargetOptions = (type: string) => {
       if (type === 'student') return allUsers.filter(u => u.role === UserRole.STUDENT);
       if (type === 'employee') return allUsers.filter(u => u.role === UserRole.TEACHER || u.role === UserRole.ACCOUNTANT || u.role === UserRole.ADMIN || u.role === UserRole.SECRETARY);
-      if (type === 'supplier') return suppliers.map(s => ({ id: s.id, firstName: s.name, role: 'supplier' })); // Adapt supplier to resemble user for list
+      if (type === 'supplier') return suppliers.map(s => ({ id: s.id, firstName: s.name, role: 'supplier' }));
       return [];
    };
 
@@ -182,6 +215,7 @@ const FinanceModule: React.FC<FinanceModuleProps> = ({ initialMode = 'list' }) =
                { id: 'boxes', label: 'الصناديق', icon: <Wallet size={16} /> },
                { id: 'z-report', label: 'إغلاق وردية', icon: <List size={16} /> },
                { id: 'currencies', label: 'العملات', icon: <Coins size={16} /> },
+               { id: 'reports', label: 'التقارير', icon: <BarChart3 size={16} /> },
             ].map(tab => (
                <button key={tab.id} onClick={() => setViewMode(tab.id as any)} className={`px-6 py-3 rounded-2xl font-black text-xs flex items-center gap-2 transition-all ${viewMode === tab.id ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:bg-white'}`}>
                   {tab.icon} {tab.label}
@@ -237,6 +271,30 @@ const FinanceModule: React.FC<FinanceModuleProps> = ({ initialMode = 'list' }) =
                      </tbody>
                   </table>
                </div>
+            </div>
+         )}
+
+         {/* Payment Requests View */}
+         {viewMode === 'payment-requests' && (
+            <div className="space-y-6">
+               {paymentRequests.length === 0 ? (
+                  <div className="p-20 text-center font-black text-slate-300">لا توجد طلبات دفع معلقة</div>
+               ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     {paymentRequests.map(req => (
+                        <div key={req.id} className="p-6 bg-white rounded-3xl border border-slate-100 shadow-sm flex justify-between items-center">
+                           <div>
+                              <p className="font-black text-slate-900">{req.studentName}</p>
+                              <p className="text-xs text-slate-500">{req.amount} EGP - {req.type}</p>
+                           </div>
+                           <div className="flex gap-2">
+                              <button onClick={() => updatePaymentStatus(req.id, 'approved')} className="px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl font-bold text-xs">قبول</button>
+                              <button onClick={() => updatePaymentStatus(req.id, 'rejected')} className="px-4 py-2 bg-rose-50 text-rose-600 rounded-xl font-bold text-xs">رفض</button>
+                           </div>
+                        </div>
+                     ))}
+                  </div>
+               )}
             </div>
          )}
 
@@ -369,9 +427,101 @@ const FinanceModule: React.FC<FinanceModuleProps> = ({ initialMode = 'list' }) =
             <div className="p-8 text-center text-slate-500 font-bold">نموذج الطباعة جاهز</div>
          )}
 
-         {/* Report Views (Placeholder) */}
-         {viewMode === 'reports' && <div className="p-20 text-center font-black text-slate-300">التقارير المالية</div>}
-         {viewMode === 'z-report' && <div className="p-20 text-center font-black text-slate-300">نظام إغلاق الوردية</div>}
+         {/* Fund Management (Boxes) */}
+         {viewMode === 'boxes' && (
+            <div className="max-w-4xl mx-auto space-y-6 animate-view">
+               <div className="flex justify-between items-center">
+                  <h3 className="text-2xl font-black">إدارة الصناديق والمحافظ</h3>
+                  <button onClick={() => setShowAddFund(!showAddFund)} className="px-6 py-3 bg-slate-900 text-white rounded-xl font-black text-xs flex items-center gap-2">
+                     {showAddFund ? <X size={16} /> : <Plus size={16} />}
+                     {showAddFund ? 'إلغاء' : 'إضافة صندوق'}
+                  </button>
+               </div>
+
+               {showAddFund && (
+                  <div className="p-8 bg-slate-50 rounded-[2.5rem] space-y-4 border border-slate-200">
+                     <div className="space-y-1">
+                        <label className="text-[10px] font-black text-slate-400 px-2 uppercase">اسم الخزينة</label>
+                        <input value={newFund.name} onChange={e => setNewFund({ ...newFund, name: e.target.value })} className="w-full p-4 bg-white rounded-xl font-bold" placeholder="مثال: الخزينة الرئيسية" />
+                     </div>
+                     <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                           <label className="text-[10px] font-black text-slate-400 px-2 uppercase">الكود المحاسبي</label>
+                           <input value={newFund.accountCode} onChange={e => setNewFund({ ...newFund, accountCode: e.target.value })} className="w-full p-4 bg-white rounded-xl font-mono text-xs" />
+                        </div>
+                        <div className="space-y-1">
+                           <label className="text-[10px] font-black text-slate-400 px-2 uppercase">الرصيد الافتتاحي</label>
+                           <input type="number" value={newFund.balance} onChange={e => setNewFund({ ...newFund, balance: parseFloat(e.target.value) })} className="w-full p-4 bg-white rounded-xl font-bold tabular-nums" />
+                        </div>
+                     </div>
+                     <button onClick={handleAddFund} className="w-full py-4 bg-indigo-600 text-white rounded-xl font-bold">حفظ الخزينة</button>
+                  </div>
+               )}
+
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {funds.map(f => (
+                     <div key={f.id} className="glass-panel p-6 bg-white rounded-[2rem] border shadow-sm flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                           <div className="p-4 bg-emerald-50 text-emerald-600 rounded-2xl"><Wallet size={24} /></div>
+                           <div>
+                              <p className="font-black text-slate-900">{f.name}</p>
+                              <p className="text-[10px] text-slate-400 font-mono">CODE: {f.accountCode}</p>
+                           </div>
+                        </div>
+                        <p className="text-xl font-black text-slate-900 tabular-nums">{f.balance.toLocaleString()} {financialSettings.currency}</p>
+                     </div>
+                  ))}
+               </div>
+            </div>
+         )}
+
+         {/* Report Views */}
+         {viewMode === 'reports' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-view">
+               <div className="glass-panel p-8 bg-white rounded-[2.5rem] border shadow-sm space-y-6">
+                  <h3 className="text-xl font-black flex items-center gap-2"><BarChart3 size={20} /> ملخص الدخل</h3>
+                  <div className="space-y-4">
+                     <div className="flex justify-between items-center p-4 bg-emerald-50 rounded-2xl">
+                        <span className="font-bold text-emerald-700">إجمالي الإيرادات</span>
+                        <span className="font-black text-xl text-emerald-800">{financialEntries.filter(e => e.debitAccount === '11101').reduce((a, b) => a + b.amount, 0).toLocaleString()}</span>
+                     </div>
+                     <div className="flex justify-between items-center p-4 bg-rose-50 rounded-2xl">
+                        <span className="font-bold text-rose-700">إجمالي المصروفات</span>
+                        <span className="font-black text-xl text-rose-800">{financialEntries.filter(e => e.creditAccount === '11101').reduce((a, b) => a + b.amount, 0).toLocaleString()}</span>
+                     </div>
+                  </div>
+               </div>
+            </div>
+         )}
+
+         {/* Z-Report View */}
+         {viewMode === 'z-report' && (
+            <div className="max-w-2xl mx-auto glass-panel p-10 bg-white rounded-[3rem] border shadow-lg space-y-8 animate-view border-t-8 border-indigo-600">
+               <div className="text-center">
+                  <h2 className="text-3xl font-black mb-2">إغلاق الوردية (Z-Report)</h2>
+                  <p className="text-slate-500 font-bold">تسوية العهدة النقدية وإغلاق الحسابات اليومية</p>
+               </div>
+
+               <div className="space-y-6">
+                  <div className="space-y-1">
+                     <label className="text-[10px] font-black text-slate-400 px-2 uppercase">اختر الخزينة (التي سيتم جردها)</label>
+                     <select onChange={e => setZReportData({ ...zReportData, selectedFund: e.target.value })} className="w-full p-4 bg-slate-50 rounded-2xl font-bold outline-none">
+                        <option value="">-- اختر الخزينة للإغلاق --</option>
+                        {funds.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+                     </select>
+                  </div>
+
+                  <div className="space-y-1">
+                     <label className="text-[10px] font-black text-slate-400 px-2 uppercase">الرصيد الفعلي (جرد الدرج)</label>
+                     <input type="number" onChange={e => setZReportData({ ...zReportData, actualCash: parseFloat(e.target.value) })} className="w-full p-5 bg-indigo-50 rounded-2xl font-black text-3xl tabular-nums text-center text-indigo-900 outline-none" placeholder="0.00" />
+                  </div>
+
+                  <button onClick={handleZReport} className="w-full py-6 bg-slate-950 text-white rounded-[2rem] font-black text-xl shadow-xl hover:bg-emerald-600 transition-all flex items-center justify-center gap-3">
+                     <Lock size={20} /> إغلاق الوردية وطباعة التقرير
+                  </button>
+               </div>
+            </div>
+         )}
       </div>
    );
 };
