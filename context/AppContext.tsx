@@ -44,7 +44,6 @@ interface AppContextType {
   adjustmentRequests: AdjustmentRequest[];
   paymentRequests: any[];
   subjects: Subject[];
-  subjects: Subject[];
   gradeLevels: GradeLevel[];
   financialSettings: FinancialSettings;
 
