@@ -93,3 +93,49 @@ export const addTransaction = (
     localStorage.setItem(STORAGE_KEY_TRANSACTIONS, JSON.stringify([newTransaction, ...current]));
     return newTransaction;
 };
+
+// --- DATA SEEDING (9 MONTHS) ---
+export const seedMockData = () => {
+    if (getTransactions().length > 0) return; // Don't seed if data exists
+
+    const categories = ['رسوم دراسية', 'كتب وملازم', 'زي مدرسي', 'رواتب', 'كهرباء', 'إنترنت', 'صيانة', 'ضيافة'];
+    const types = ['INCOME', 'INCOME', 'INCOME', 'EXPENSE', 'EXPENSE', 'EXPENSE', 'EXPENSE', 'EXPENSE'];
+
+    let mockData: FinanceTransaction[] = [];
+    const config = getFinanceConfig();
+    const today = new Date();
+
+    // Generate data for past 9 months
+    for (let i = 0; i < 270; i++) {
+        const date = new Date();
+        date.setDate(today.getDate() - i);
+
+        // Random number of transactions per day (0-3)
+        const dailyCount = Math.floor(Math.random() * 4);
+
+        for (let j = 0; j < dailyCount; j++) {
+            const index = Math.floor(Math.random() * categories.length);
+            const type = types[index] as 'INCOME' | 'EXPENSE';
+            const amount = Math.floor(Math.random() * 5000) + 100;
+
+            // Tax Logic (Simplified for Seed)
+            const baseAmount = amount / 1.14;
+            const taxAmount = amount - baseAmount;
+
+            mockData.push({
+                id: `MOCK-${Date.now()}-${i}-${j}`,
+                description: `عملية ${categories[index]} - تجريبية`,
+                amount: amount,
+                baseAmount: Number(baseAmount.toFixed(2)),
+                taxAmount: Number(taxAmount.toFixed(2)),
+                category: categories[index],
+                date: date.toISOString().split('T')[0],
+                type: type,
+                status: 'COMPLETED'
+            });
+        }
+    }
+
+    localStorage.setItem(STORAGE_KEY_TRANSACTIONS, JSON.stringify(mockData));
+    console.log(`Seeded ${mockData.length} mock transactions.`);
+};
