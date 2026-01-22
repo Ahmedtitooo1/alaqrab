@@ -1,503 +1,179 @@
--- Enable UUID extension
-create extension if not exists "uuid-ossp";
+-- =====================================================
+-- 📊 AL-AQRAB EDUCATIONAL SYSTEM - DATABASE SCHEMA
+-- =====================================================
+-- Run this SQL in Supabase SQL Editor
+-- This will create all necessary tables with proper relationships
 
--- ==========================================
--- 1. CORE & AUTH
--- ==========================================
+-- Enable UUID Extension
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Institutions (Tenants)
-create table if not exists "institutions" (
-  "id" text primary key,
-  "name" text not null,
-  "type" text,
-  "subdomain" text,
-  "logo" text,
-  "permissions" jsonb default '{}',
-  "limits" jsonb default '{}',
-  "pricing" jsonb default '{}',
-  "paymentHistory" jsonb default '[]',
-  "expiryDate" text,
-  "status" text,
-  "revenue" numeric default 0,
-  "defaultCurrency" text,
-  "currencies" jsonb default '[]',
-  "created_at" timestamp with time zone default timezone('utc'::text, now())
+-- =====================================================
+-- 1. TENANTS (Multi-Tenant Support)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS tenants (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(255) NOT NULL,
+    type VARCHAR(50) NOT NULL CHECK (type IN ('school', 'center', 'individual')),
+    subdomain VARCHAR(100) UNIQUE,
+    subscription_end_date DATE,
+    status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'suspended', 'expired')),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Users
-create table if not exists "users" (
-  "id" text primary key,
-  "code" text,
-  "firstName" text,
-  "lastName" text,
-  "username" text,
-  "password" text, -- Added for migration compatibility
-  "role" text,
-  "institutionId" text references "institutions"("id"),
-  "teacherId" text,
-  "parentId" text,
-  "email" text,
-  "phone" text,
-  "aiQuestionsCount" integer default 0,
-  "salary" numeric,
-  "allowances" numeric,
-  "deductions" numeric,
-  "jobTitle" text,
-  "balance" numeric default 0,
-  "subscriptionAmount" numeric,
-  "paidAmount" numeric,
-  "nextRenewalDate" text,
-  "created_at" timestamp with time zone default timezone('utc'::text, now())
+-- =====================================================
+-- 2. USERS (All System Users)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS users (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    username VARCHAR(100) UNIQUE,
+    full_name VARCHAR(255) NOT NULL,
+    role VARCHAR(50) NOT NULL CHECK (role IN ('super_admin', 'admin', 'teacher', 'accountant', 'secretary', 'student', 'parent')),
+    password_hash TEXT, -- For demo purposes
+    phone VARCHAR(50),
+    avatar_url TEXT,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- ==========================================
--- 2. FINANCIAL SYSTEM
--- ==========================================
-
--- Fiscal Years
-create table if not exists "fiscal_years" (
-  "id" text primary key,
-  "name" text,
-  "startDate" text,
-  "endDate" text,
-  "status" text,
-  "institutionId" text references "institutions"("id"),
-  "created_at" timestamp with time zone default timezone('utc'::text, now())
+-- =====================================================
+-- 3. STUDENTS (Student Profiles)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS students (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    student_code VARCHAR(50) UNIQUE NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    grade_level VARCHAR(50),
+    date_of_birth DATE,
+    parent_phone VARCHAR(50),
+    parent_email VARCHAR(255),
+    subscription_amount DECIMAL(10, 2) DEFAULT 0,
+    balance DECIMAL(10, 2) DEFAULT 0,
+    joined_at DATE DEFAULT CURRENT_DATE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Financial Categories
-create table if not exists "financial_categories" (
-  "id" text primary key,
-  "name" text,
-  "code" text,
-  "type" text,
-  "parentId" text,
-  "level" integer,
-  "isDynamic" boolean default false,
-  "institutionId" text references "institutions"("id"),
-  "created_at" timestamp with time zone default timezone('utc'::text, now())
+-- =====================================================
+-- 4. SUBJECTS (Academic Subjects)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS subjects (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    code VARCHAR(50),
+    teacher_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    grade_level VARCHAR(50),
+    description TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Financial Funds (Banks/Safes)
-create table if not exists "financial_funds" (
-  "id" text primary key,
-  "name" text,
-  "type" text,
-  "balance" numeric default 0,
-  "accountCode" text,
-  "publicAccountNumber" text,
-  "isPublicToGuardians" boolean default false,
-  "institutionId" text references "institutions"("id"),
-  "accountDescription" text,
-  "created_at" timestamp with time zone default timezone('utc'::text, now())
+-- =====================================================
+-- 5. FINANCIAL TRANSACTIONS
+-- =====================================================
+CREATE TABLE IF NOT EXISTS transactions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
+    transaction_code VARCHAR(100) UNIQUE,
+    amount DECIMAL(12, 2) NOT NULL,
+    type VARCHAR(20) NOT NULL CHECK (type IN ('income', 'expense')),
+    category VARCHAR(100) NOT NULL,
+    description TEXT,
+    student_id UUID REFERENCES students(id) ON DELETE SET NULL,
+    debit_account VARCHAR(50),
+    credit_account VARCHAR(50),
+    payment_method VARCHAR(50),
+    transaction_date DATE NOT NULL,
+    status VARCHAR(20) DEFAULT 'completed' CHECK (status IN ('draft', 'completed', 'cancelled')),
+    created_by UUID REFERENCES users(id) ON DELETE SET NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Financial Entries (Journal/Transactions)
-create table if not exists "financial_entries" (
-  "id" text primary key,
-  "date" text,
-  "description" text,
-  "amount" numeric,
-  "debitAccount" text,
-  "creditAccount" text,
-  "institutionId" text references "institutions"("id"),
-  "refType" text,
-  "attachment" text,
-  "lines" jsonb default '[]',
-  "costCenter" text,
-  "currency" text,
-  "exchangeRate" numeric,
-  "isPosted" boolean default true,
-  "isCanceled" boolean default false,
-  "targetId" text, -- Links to User/Supplier
-  "created_at" timestamp with time zone default timezone('utc'::text, now())
+-- =====================================================
+-- 6. EXAM RESULTS
+-- =====================================================
+CREATE TABLE IF NOT EXISTS exam_results (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
+    student_id UUID REFERENCES students(id) ON DELETE CASCADE,
+    subject_id UUID REFERENCES subjects(id) ON DELETE CASCADE,
+    exam_name VARCHAR(255) NOT NULL,
+    score DECIMAL(5, 2) NOT NULL,
+    max_score DECIMAL(5, 2) DEFAULT 100,
+    percentage DECIMAL(5, 2) GENERATED ALWAYS AS ((score / max_score) * 100) STORED,
+    grade VARCHAR(5),
+    exam_date DATE NOT NULL,
+    teacher_notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Liabilities
-create table if not exists "liabilities" (
-  "id" text primary key,
-  "title" text,
-  "category" text,
-  "amount" numeric,
-  "dueDate" text,
-  "status" text,
-  "notes" text,
-  "institutionId" text references "institutions"("id"),
-  "created_at" timestamp with time zone default timezone('utc'::text, now())
+-- =====================================================
+-- 7. FINANCIAL CATEGORIES (Chart of Accounts)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS financial_categories (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
+    code VARCHAR(50) UNIQUE NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    type VARCHAR(50) NOT NULL CHECK (type IN ('asset', 'liability', 'equity', 'income', 'expense')),
+    parent_id UUID REFERENCES financial_categories(id) ON DELETE CASCADE,
+    level INTEGER DEFAULT 1,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Payroll Records
-create table if not exists "payroll_records" (
-  "id" text primary key,
-  "userId" text references "users"("id"),
-  "amount" numeric,
-  "date" text,
-  "status" text,
-  "month" integer,
-  "year" integer,
-  "institutionId" text references "institutions"("id"),
-  "created_at" timestamp with time zone default timezone('utc'::text, now())
-);
+-- =====================================================
+-- INDEXES FOR PERFORMANCE
+-- =====================================================
+CREATE INDEX idx_users_tenant ON users(tenant_id);
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_students_tenant ON students(tenant_id);
+CREATE INDEX idx_students_code ON students(student_code);
+CREATE INDEX idx_transactions_tenant ON transactions(tenant_id);
+CREATE INDEX idx_transactions_date ON transactions(transaction_date);
+CREATE INDEX idx_transactions_student ON transactions(student_id);
+CREATE INDEX idx_exam_results_student ON exam_results(student_id);
+CREATE INDEX idx_exam_results_date ON exam_results(exam_date);
 
--- Family Wallets
-create table if not exists "family_wallets" (
-  "parentId" text primary key, -- Assuming parentId is unique
-  "balance" numeric default 0,
-  "linkedStudentIds" jsonb default '[]',
-  "institutionId" text references "institutions"("id"),
-  "transactions" jsonb default '[]',
-  "created_at" timestamp with time zone default timezone('utc'::text, now())
-);
+-- =====================================================
+-- ROW LEVEL SECURITY (RLS) - PUBLIC ACCESS FOR TESTING
+-- =====================================================
+-- ⚠️ WARNING: These policies allow PUBLIC access for testing phase only!
+-- Remove or modify for production deployment
 
--- Payment Requests
-create table if not exists "payment_requests" (
-  "id" text primary key,
-  "studentId" text,
-  "studentName" text,
-  "parentId" text,
-  "parentName" text,
-  "amount" numeric,
-  "paymentMethod" text,
-  "fundId" text,
-  "fundName" text,
-  "status" text,
-  "submittedDate" text,
-  "reviewedDate" text,
-  "reviewedBy" text,
-  "receiptData" jsonb,
-  "notes" text,
-  "institutionId" text references "institutions"("id"),
-  "created_at" timestamp with time zone default timezone('utc'::text, now())
-);
+ALTER TABLE tenants ENABLE ROW LEVEL SECURITY;
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE students ENABLE ROW LEVEL SECURITY;
+ALTER TABLE subjects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE exam_results ENABLE ROW LEVEL SECURITY;
+ALTER TABLE financial_categories ENABLE ROW LEVEL SECURITY;
 
--- Adjustment Requests
-create table if not exists "adjustment_requests" (
-  "id" text primary key,
-  "studentId" text references "users"("id"),
-  "amount" numeric,
-  "reasonCategory" text,
-  "description" text,
-  "requestedBy" text,
-  "approvedBy" text,
-  "status" text,
-  "date" text,
-  "institutionId" text references "institutions"("id"),
-  "created_at" timestamp with time zone default timezone('utc'::text, now())
-);
+-- Public Access (Testing Phase Only)
+CREATE POLICY "Public Access Tenants" ON tenants FOR ALL USING (true);
+CREATE POLICY "Public Access Users" ON users FOR ALL USING (true);
+CREATE POLICY "Public Access Students" ON students FOR ALL USING (true);
+CREATE POLICY "Public Access Subjects" ON subjects FOR ALL USING (true);
+CREATE POLICY "Public Access Transactions" ON transactions FOR ALL USING (true);
+CREATE POLICY "Public Access Exam Results" ON exam_results FOR ALL USING (true);
+CREATE POLICY "Public Access Categories" ON financial_categories FOR ALL USING (true);
 
--- ==========================================
--- 3. INVENTORY & SUPPLY
--- ==========================================
-
--- Suppliers
-create table if not exists "suppliers" (
-  "id" text primary key,
-  "code" text,
-  "name" text,
-  "phone" text,
-  "email" text,
-  "address" text,
-  "balance" numeric default 0,
-  "institutionId" text references "institutions"("id"),
-  "created_at" timestamp with time zone default timezone('utc'::text, now())
-);
-
--- Inventory Items
-create table if not exists "inventory_items" (
-  "id" text primary key,
-  "code" text,
-  "name" text,
-  "category" text,
-  "quantity" numeric default 0,
-  "unitPrice" numeric default 0,
-  "minQuantity" numeric default 0,
-  "location" text,
-  "accountCode" text,
-  "supplierId" text references "suppliers"("id"),
-  "institutionId" text references "institutions"("id"),
-  "created_at" timestamp with time zone default timezone('utc'::text, now())
-);
-
--- Inventory Transactions
-create table if not exists "inventory_transactions" (
-  "id" text primary key,
-  "itemId" text references "inventory_items"("id"),
-  "type" text, 
-  "quantity" numeric,
-  "date" text,
-  "description" text,
-  "supplierId" text,
-  "refNo" text,
-  "unitPrice" numeric,
-  "institutionId" text references "institutions"("id"),
-  "created_at" timestamp with time zone default timezone('utc'::text, now())
-);
-
--- ==========================================
--- 4. ACADEMIC & OPERATIONS
--- ==========================================
-
--- Behavior Records
-create table if not exists "behavior_records" (
-  "id" text primary key,
-  "studentId" text references "users"("id"),
-  "studentName" text,
-  "date" text,
-  "type" text,
-  "category" text,
-  "severity" text,
-  "description" text,
-  "actionTaken" text,
-  "reportedBy" text,
-  "institutionId" text references "institutions"("id"),
-  "created_at" timestamp with time zone default timezone('utc'::text, now())
-);
-
--- Exams
-create table if not exists "exams" (
-  "id" text primary key,
-  "title" text,
-  "subject" text,
-  "duration" integer,
-  "totalPoints" numeric,
-  "questions" jsonb default '[]',
-  "status" text,
-  "institutionId" text references "institutions"("id"),
-  "teacherId" text references "users"("id"),
-  "created_at" timestamp with time zone default timezone('utc'::text, now())
-);
-
--- Assignments
-create table if not exists "assignments" (
-  "id" text primary key,
-  "title" text,
-  "description" text,
-  "dueDate" text,
-  "courseId" text,
-  "subject" text,
-  "teacherId" text references "users"("id"),
-  "status" text,
-  "points" numeric,
-  "questions" jsonb default '[]',
-  "studentsSubmitted" integer default 0,
-  "institutionId" text references "institutions"("id"),
-  "created_at" timestamp with time zone default timezone('utc'::text, now())
-);
-
--- Assignment Submissions
-create table if not exists "assignment_submissions" (
-  "id" text primary key,
-  "assignmentId" text references "assignments"("id"),
-  "studentId" text references "users"("id"),
-  "studentName" text,
-  "fileUrl" text,
-  "files" jsonb,
-  "submittedAt" text,
-  "status" text,
-  "grade" numeric,
-  "institutionId" text references "institutions"("id"),
-  "created_at" timestamp with time zone default timezone('utc'::text, now())
-);
-
--- Learning Paths
-create table if not exists "learning_paths" (
-  "id" text primary key,
-  "studentId" text references "users"("id"),
-  "title" text,
-  "description" text,
-  "modules" jsonb default '[]',
-  "steps" jsonb default '[]',
-  "progress" numeric default 0,
-  "institutionId" text references "institutions"("id"),
-  "created_at" timestamp with time zone default timezone('utc'::text, now())
-);
-
--- Announcements
-create table if not exists "announcements" (
-  "id" text primary key,
-  "title" text,
-  "content" text,
-  "type" text,
-  "status" text,
-  "date" text,
-  "authorId" text,
-  "authorName" text,
-  "authorRole" text,
-  "mediaUrl" text,
-  "mediaType" text,
-  "eventDate" text,
-  "institutionId" text references "institutions"("id"),
-  "created_at" timestamp with time zone default timezone('utc'::text, now())
-);
-
--- Tickets (Maintenance/IT)
-create table if not exists "tickets" (
-  "id" text primary key,
-  "title" text,
-  "description" text,
-  "priority" text,
-  "status" text,
-  "category" text,
-  "createdBy" text,
-  "assignedTo" text,
-  "createdAt" text,
-  "updatedAt" text,
-  "comments" jsonb,
-  "institutionId" text references "institutions"("id")
-);
-
--- Notifications
-create table if not exists "notifications" (
-  "id" text primary key,
-  "title" text,
-  "content" text,
-  "date" text,
-  "isRead" boolean default false,
-  "type" text,
-  "userId" text references "users"("id"),
-  "institutionId" text references "institutions"("id"),
-  "created_at" timestamp with time zone default timezone('utc'::text, now())
-);
-
--- Certificates
-create table if not exists "certificate_templates" (
-  "id" text primary key,
-  "name" text,
-  "type" text,
-  "backgroundImage" text,
-  "elements" jsonb default '[]',
-  "layout" jsonb,
-  "createdAt" text,
-  "institutionId" text references "institutions"("id")
-);
-
--- Grading Formulas
-create table if not exists "grading_formulas" (
-  "id" text primary key,
-  "name" text,
-  "subjectId" text,
-  "components" jsonb default '[]',
-  "createdAt" text,
-  "institutionId" text references "institutions"("id")
-);
-
--- Custom Fields
-create table if not exists "custom_field_definitions" (
-  "id" text primary key,
-  "label" text,
-  "key" text,
-  "type" text,
-  "required" boolean default false,
-  "options" jsonb default '[]',
-  "targetRole" text,
-  "institutionId" text references "institutions"("id")
-);
-
--- ==========================================
--- 5. ANALYTICS & MARKETPLACE
--- ==========================================
-
--- Student Progress
-create table if not exists "student_progress" (
-  "userId" text references "users"("id"),
-  "subject" text,
-  "monthlyScores" jsonb default '[]',
-  "attendanceRate" numeric,
-  "strengths" jsonb default '[]',
-  "weaknesses" jsonb default '[]',
-  "recommendations" jsonb default '[]',
-  "institutionId" text references "institutions"("id"),
-  primary key ("userId", "subject")
-);
-
--- Proctoring Logs
-create table if not exists "proctoring_logs" (
-  "id" text primary key,
-  "studentId" text references "users"("id"),
-  "examId" text references "exams"("id"),
-  "action" text,
-  "timestamp" text,
-  "severity" text,
-  "institutionId" text references "institutions"("id"),
-  "created_at" timestamp with time zone default timezone('utc'::text, now())
-);
-
--- Marketplace Items
-create table if not exists "marketplace_items" (
-  "id" text primary key,
-  "title" text,
-  "description" text,
-  "price" numeric default 0,
-  "author" text,
-  "rating" numeric,
-  "sales" integer default 0,
-  "image" text,
-  "category" text,
-  "teacherName" text,
-  "type" text,
-  "thumbnail" text,
-  "institutionId" text references "institutions"("id"),
-  "created_at" timestamp with time zone default timezone('utc'::text, now())
-);
-
--- Achievements
-create table if not exists "achievements" (
-  "id" text primary key,
-  "title" text,
-  "description" text,
-  "icon" text,
-  "points" integer,
-  "type" text,
-  "institutionId" text references "institutions"("id"),
-  "created_at" timestamp with time zone default timezone('utc'::text, now())
-);
-
--- ==========================================
--- 6. SECURITY & REALTIME
--- ==========================================
-
--- Enable RLS
-DO $$ 
-DECLARE 
-    tbl text;
-BEGIN 
-    FOR tbl IN 
-        SELECT tablename FROM pg_tables WHERE schemaname = 'public' 
-    LOOP 
-        EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY;', tbl);
-        BEGIN
-            EXECUTE format('CREATE POLICY "Enable all access" ON %I FOR ALL USING (true) WITH CHECK (true);', tbl);
-        EXCEPTION WHEN duplicate_object THEN NULL;
-        END;
-    END LOOP; 
+-- =====================================================
+-- SUCCESS MESSAGE
+-- =====================================================
+DO $$
+BEGIN
+    RAISE NOTICE '✅ Database Schema Created Successfully!';
+    RAISE NOTICE '📊 Total Tables: 7';
+    RAISE NOTICE '🔒 RLS Enabled with Public Access (Testing Mode)';
+    RAISE NOTICE '⚡ Ready for data seeding!';
 END $$;
-
--- ENABLE REALTIME FOR ALL TABLES
-begin;
-  -- If publication exists, we will add tables. If not, create it.
-  -- Supabase defaults to 'supabase_realtime' publication.
-  
-  -- Core
-  alter publication supabase_realtime add table institutions;
-  alter publication supabase_realtime add table users;
-  
-  -- Financials
-  alter publication supabase_realtime add table financial_entries;
-  alter publication supabase_realtime add table financial_funds;
-  alter publication supabase_realtime add table financial_categories;
-  alter publication supabase_realtime add table suppliers;
-  alter publication supabase_realtime add table inventory_items;
-  alter publication supabase_realtime add table inventory_transactions;
-  
-  -- Operations
-  alter publication supabase_realtime add table tickets;
-  alter publication supabase_realtime add table behavior_records;
-  alter publication supabase_realtime add table exams;
-  alter publication supabase_realtime add table announcements;
-  alter publication supabase_realtime add table assignments;
-  alter publication supabase_realtime add table notifications;
-  
-  -- Analytics
-  alter publication supabase_realtime add table student_progress;
-  alter publication supabase_realtime add table marketplace_items;
-commit;

@@ -19,6 +19,8 @@ import ReportsModule from './ReportsModule';
 import PayrollModule from './PayrollModule';
 import StudentFinancialProfile from './StudentFinancialProfile';
 import FinanceSettings from './modules/FinanceSettings';
+import JournalEntries from '../src/components/finance/JournalEntries';
+import FinancialReports from '../src/components/finance/FinancialReports';
 
 interface AccountantModuleProps {
    mode: string;
@@ -260,7 +262,7 @@ const AccountantModule: React.FC<AccountantModuleProps> = ({ mode, onNavigate })
             </div>
          );
          case 'acc_inventory': return <InventoryModule />;
-         case 'acc_reports': return <ReportsModule />;
+         case 'acc_reports': return <FinancialReports institutionId={currentUser?.institutionId} />;
          case 'acc_liquidity': return <div className="space-y-12 animate-view text-right">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                <div className="glass-panel p-10 bg-white rounded-[2.5rem] border shadow-sm flex flex-col gap-6 group hover:border-indigo-600 transition-all">
@@ -296,7 +298,7 @@ const AccountantModule: React.FC<AccountantModuleProps> = ({ mode, onNavigate })
          </div>;
          case 'acc_payroll': return <PayrollModule />;
          case 'acc_entries_list': return <FinanceModule initialMode="list" />;
-         case 'acc_journal': return <FinanceModule initialMode="entry" />;
+         case 'acc_journal': return <JournalEntries institutionId={currentUser?.institutionId} userName={`${currentUser?.firstName} ${currentUser?.lastName}`} />;
          case 'acc_employees':
             return (
                <div className="space-y-10 animate-view text-right">

@@ -3,12 +3,14 @@ import React, { useState, useEffect } from 'react';
 import { FinanceTransaction, FinanceConfig } from '../../../types';
 import { getTransactions, addTransaction, getFinanceConfig } from '../../services/mockFinance';
 import FinanceSettings from './FinanceSettings';
+import JournalEntries from './JournalEntries';
+import FinancialReports from './FinancialReports';
 import { Plus, Printer, Download, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
 import { useAppContext } from '../../../context/AppContext';
 
 const FinanceDashboard: React.FC = () => {
     const { user } = useAppContext();
-    const [view, setView] = useState<'transactions' | 'settings'>('transactions');
+    const [view, setView] = useState<'transactions' | 'settings' | 'journal' | 'reports'>('transactions');
     const [transactions, setTransactions] = useState<FinanceTransaction[]>([]);
     const [config, setConfig] = useState<FinanceConfig | null>(null); // Should load
     const [showModal, setShowModal] = useState(false);
@@ -111,6 +113,18 @@ const FinanceDashboard: React.FC = () => {
                         سجل العمليات
                     </button>
                     <button
+                        onClick={() => setView('journal')}
+                        className={`px-6 py-2 rounded-xl font-bold text-sm transition-all ${view === 'journal' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-50'}`}
+                    >
+                        📒 القيود اليومية
+                    </button>
+                    <button
+                        onClick={() => setView('reports')}
+                        className={`px-6 py-2 rounded-xl font-bold text-sm transition-all ${view === 'reports' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-50'}`}
+                    >
+                        📈 التقارير المالية
+                    </button>
+                    <button
                         onClick={() => setView('settings')}
                         className={`px-6 py-2 rounded-xl font-bold text-sm transition-all ${view === 'settings' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-50'}`}
                     >
@@ -133,6 +147,10 @@ const FinanceDashboard: React.FC = () => {
             {/* Content Area */}
             {view === 'settings' ? (
                 <FinanceSettings />
+            ) : view === 'journal' ? (
+                <JournalEntries institutionId={user?.institutionId} userName={`${user?.firstName} ${user?.lastName}`} />
+            ) : view === 'reports' ? (
+                <FinancialReports institutionId={user?.institutionId} />
             ) : (
                 <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
                     <table className="w-full text-right">
